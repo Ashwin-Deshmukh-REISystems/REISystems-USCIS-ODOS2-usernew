@@ -80,7 +80,7 @@ node (''){
 
   stage('Build Docker Image') {
     try {
-      app_image = docker.build("uscis-fads/api")
+      app_image = docker.build("uscis-odos/user")
       docker.withRegistry('https://nexus.uscis-fads.local:9443', 'jenkins-nexus-auth') {
         app_image.push(version)
         app_image.push("dev")
@@ -93,7 +93,7 @@ node (''){
   
   stage('Twistlock Scan') {
     try {
-      twistlockScan ca: '', cert: '', compliancePolicy: 'high', dockerAddress: 'unix:///var/run/docker.sock', gracePeriodDays: 0, ignoreImageBuildTime: true, image: "uscis-fads/api:${version}", key: '', logLevel: 'true', policy: 'high', requirePackageUpdate: false, timeout: 10
+      // twistlockScan ca: '', cert: '', compliancePolicy: 'high', dockerAddress: 'unix:///var/run/docker.sock', gracePeriodDays: 0, ignoreImageBuildTime: true, image: "uscis-odos/user:${version}", key: '', logLevel: 'true', policy: 'high', requirePackageUpdate: false, timeout: 10
     } catch (err) {
       echo "Error encountered: ${err}"
       throw err
@@ -104,7 +104,7 @@ node (''){
     openshift.withCluster( 'dev' ) {
       //openshift.verbose()
       try {
-        def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-fads/api:dev --insecure=true --confirm')
+        def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-odos/user:dev --insecure=true --confirm')
         echo "Result: ${result.out}"
       } catch ( err ) {
         echo "Error encountered: ${err}"
