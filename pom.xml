@@ -5,8 +5,8 @@
 	<version>0.0.1</version>
 	<packaging>jar</packaging>	
 	
-    <name>USCIS ODOS2 API</name>
-    <description>USCIS ODOS2 API</description>
+    <name>USCIS ODOS2 USER API</name>
+    <description>USCIS ODOS2 USER API</description>
     
     <parent>
 		<groupId>org.springframework.boot</groupId>
