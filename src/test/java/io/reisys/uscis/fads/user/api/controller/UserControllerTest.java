@@ -55,17 +55,17 @@ public class UserControllerTest {
 		User user1 = UserTestUtility.createUser("1", "FirstName1", "LastName1", "FirstName1.LastName1@test.com");
 		User user2 = UserTestUtility.createUser("2", "FirstName2", "LastName", "FirstName2.LastName2@test.com");
 		List<User> users = Arrays.asList(user1, user2);
-		when(oktaClientUtil.getAllActiveUsersForGroup("Requestor")).thenReturn(users);
+		when(oktaClientUtil.getAllActiveUsers()).thenReturn(users);
 		
 		mockMvc.perform(get("/api/v1/user"))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType("application/hal+json;charset=UTF-8"))
 			.andExpect(jsonPath("$.content", hasSize(2)));
 		
-		Mockito.verify(oktaClientUtil, times(1)).getAllActiveUsersForGroup("Requestor");
+		Mockito.verify(oktaClientUtil, times(1)).getAllActiveUsers();
 		
 		//When No Active Users exist
-		when(oktaClientUtil.getAllActiveUsersForGroup("Requestor")).thenReturn(null);
+		when(oktaClientUtil.getAllActiveUsers()).thenReturn(null);
 		mockMvc.perform(get("/api/v1/user"))
 			.andExpect(status().isNotFound());
 
@@ -85,8 +85,7 @@ public class UserControllerTest {
 			.andExpect(jsonPath("$.firstName", is(user1.getFirstName())))
 			.andExpect(jsonPath("$.lastName", is(user1.getLastName())))
 			.andExpect(jsonPath("$.email", is(user1.getEmail())))
-			.andExpect(jsonPath("$.status", is(user1.getStatus())))
-			.andExpect(jsonPath("$.role", is(user1.getRole())));
+			.andExpect(jsonPath("$.status", is(user1.getStatus())));
 		Mockito.verify(oktaClientUtil, times(1)).getUser("1");
 		
 		mockMvc.perform(get("/api/v1/user/2"))
@@ -96,8 +95,7 @@ public class UserControllerTest {
 			.andExpect(jsonPath("$.firstName", is(user2.getFirstName())))
 			.andExpect(jsonPath("$.lastName", is(user2.getLastName())))
 			.andExpect(jsonPath("$.email", is(user2.getEmail())))
-			.andExpect(jsonPath("$.status", is(user2.getStatus())))
-			.andExpect(jsonPath("$.role", is(user2.getRole())));
+			.andExpect(jsonPath("$.status", is(user2.getStatus())));
 		Mockito.verify(oktaClientUtil, times(1)).getUser("2");
 		
 		//When User with id does not exist
@@ -109,7 +107,7 @@ public class UserControllerTest {
 	@Test
 	public void testCreateUser() throws Exception {
 		User user1 = UserTestUtility.createUser("1", "FirstName1", "LastName1", "FirstName1.LastName1@test.com");
-		when(oktaClientUtil.createUser(user1, "Requestor")).thenReturn(user1);
+		when(oktaClientUtil.createUser(user1)).thenReturn(user1);
 		when(oktaClientUtil.doesUserWithEmailExist("FirstName1.LastName1@test.com")).thenReturn(Boolean.FALSE);
 		
 		mockMvc.perform(post("/api/v1/user/create").contentType(MediaType.APPLICATION_JSON)
@@ -119,10 +117,9 @@ public class UserControllerTest {
 				.andExpect(jsonPath("$.firstName", is(user1.getFirstName())))
 				.andExpect(jsonPath("$.lastName", is(user1.getLastName())))
 				.andExpect(jsonPath("$.email", is(user1.getEmail())))
-				.andExpect(jsonPath("$.status", is(user1.getStatus())))
-				.andExpect(jsonPath("$.role", is(user1.getRole())));
+				.andExpect(jsonPath("$.status", is(user1.getStatus())));
 		
-		Mockito.verify(oktaClientUtil, times(1)).createUser(user1, "Requestor");
+		Mockito.verify(oktaClientUtil, times(1)).createUser(user1);
 		
 		when(oktaClientUtil.doesUserWithEmailExist("FirstName1.LastName1@test.com")).thenReturn(Boolean.TRUE);
 		mockMvc.perform(post("/api/v1/user/create").contentType(MediaType.APPLICATION_JSON)
@@ -135,12 +132,14 @@ public class UserControllerTest {
 	public void testUpdateUser() throws Exception {
 		User user1 = UserTestUtility.createUser("1", "FirstName1", "LastName1", "FirstName1.LastName1@test.com");
 		when(oktaClientUtil.updateUser(user1)).thenReturn(Boolean.TRUE);
+		when(oktaClientUtil.getUser("1")).thenReturn(user1);
 		
 		mockMvc.perform(patch("/api/v1/user/1/update").contentType(MediaType.APPLICATION_JSON)
 				.content(UserTestUtility.getUserAsJsonString(user1)))
 			.andExpect(status().isOk());
 		
 		Mockito.verify(oktaClientUtil, times(1)).updateUser(user1);
+		Mockito.verify(oktaClientUtil, times(1)).getUser("1");
 		
 		//When update was not successful
 		when(oktaClientUtil.updateUser(user1)).thenReturn(Boolean.FALSE);
@@ -165,5 +164,23 @@ public class UserControllerTest {
 			.andExpect(status().isNotFound());
 		
 		Mockito.verify(oktaClientUtil, times(1)).deActivateUser("2");
+	}
+	
+	@Test
+	public void testActivateUser() throws Exception {
+		when(oktaClientUtil.activateUser("1")).thenReturn(Boolean.TRUE);
+		
+		mockMvc.perform(delete("/api/v1/user/1/activate"))
+			.andExpect(status().isOk());
+		
+		Mockito.verify(oktaClientUtil, times(1)).activateUser("1");
+		
+		//When Delete was not successful
+		when(oktaClientUtil.activateUser("2")).thenReturn(Boolean.FALSE);
+		
+		mockMvc.perform(delete("/api/v1/user/2/activate"))
+			.andExpect(status().isNotFound());
+		
+		Mockito.verify(oktaClientUtil, times(1)).activateUser("2");
 	}
 }

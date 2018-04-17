@@ -1,5 +1,7 @@
 package io.reisys.uscis.fads.user.api.utils;
 
+import java.util.Arrays;
+
 import com.google.gson.Gson;
 
 import io.reisys.uscis.fads.user.api.model.User;
@@ -13,7 +15,7 @@ public class UserTestUtility {
 		user.setLastName(lastName);
 		user.setEmail(email);
 		user.setStatus("ACTIVE");
-		user.setRole("Requestor");
+		user.setRoles(Arrays.asList("Requestor"));
 		return user;
 	}
 	
