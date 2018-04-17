@@ -44,7 +44,7 @@ node (''){
   
   stage('Build') {
     try {
-      sh "mvn -Dmaven.test.skip=true -B clean package"
+      sh "mvn -B clean package"
     } catch (err) {
       echo "Error encountered: ${err}"
       throw err
