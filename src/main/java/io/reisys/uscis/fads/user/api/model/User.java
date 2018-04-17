@@ -12,22 +12,6 @@ public class User  extends ResourceSupport {
 	private String role;
 	private String status;
 	
-	public User() {
-	}
-	
-	public User(com.okta.sdk.resource.user.User user) {
-		this.userId = user.getId();
-		this.firstName = user.getProfile().getFirstName();
-		this.lastName = user.getProfile().getLastName();
-		this.email = user.getProfile().getEmail();
-		this.status = user.getStatus().name();
-		
-//		RoleList roleList = user.listRoles();
-//		if (roleList != null) {
-//			this.role = roleList.single().getType();
-//		}
-	}
-	
 	public String getUserId() {
 		return userId;
 	}

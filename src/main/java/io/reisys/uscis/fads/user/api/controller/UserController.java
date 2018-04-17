@@ -16,14 +16,15 @@ import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.okta.sdk.client.Client;
-import com.okta.sdk.resource.user.UserList;
+import com.google.gson.Gson;
 
 import io.reisys.uscis.fads.user.api.model.User;
+import io.reisys.uscis.fads.user.api.util.OktaClientUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -36,7 +37,7 @@ import io.swagger.annotations.ApiResponses;
 public class UserController {
 	
     @Autowired
-	private Client oktaClient;
+	private OktaClientUtil oktaClientUtil;
     
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
     
@@ -50,13 +51,10 @@ public class UserController {
 
     	LOGGER.info("Retrieving list of Users");
     	
-    	UserList oktaUserList = oktaClient.listUsers();
-    	if (oktaUserList != null ) {
-    		List<User> userList = new ArrayList<User>();
-	    	for(com.okta.sdk.resource.user.User oktaUser: oktaUserList) {
-	    		User user = new User(oktaUser);
+    	List<User> userList = oktaClientUtil.getAllActiveUsersForGroup("Requestor");
+    	if (userList != null ) {
+	    	for(User user: userList) {
 	    		assembleLinks(user);
-	    		userList.add(user);
 	    	}
 	    	
 	    	List<Link> links = new ArrayList<>();
@@ -86,16 +84,72 @@ public class UserController {
     public ResponseEntity<User> getUser(@ApiParam(value = "The id of the user being retrieved", required = true) @PathVariable("userId") String userId) {
     	LOGGER.info("Retrieving User with id {}", userId);
     	
-    	com.okta.sdk.resource.user.User oktaUser = oktaClient.getUser(userId);
-    	if (oktaUser != null) {
+    	User user = oktaClientUtil.getUser(userId);
+    	if (user != null) {
     		LOGGER.info("User exists ");
-    		User user = new User(oktaUser);
     		assembleLinks(user);
         	return ResponseEntity.ok().body(user);
     	} else {
     		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     	}
         
+    }
+    
+    @RequestMapping(value = "/create", method = RequestMethod.POST, produces = MediaTypes.HAL_JSON_VALUE)
+    @ApiOperation(value = "Create User Information")
+    @ApiResponses(value = {
+	         @ApiResponse(code = 404, message = "Service not found"),
+	         @ApiResponse(code = 200, message = "Successful retrieval",
+       response = User.class) })    
+    public ResponseEntity<User> createUser(@ApiParam(value = "The json for User being created", required = true) @RequestBody String jsonData) {
+
+    	LOGGER.info("Creating User");
+    	Gson gson = new Gson();
+        User userFromJson = gson.fromJson(jsonData, User.class);
+        //TODO add validation for user information
+        User user = oktaClientUtil.createUser(userFromJson, "Requestor");
+		return ResponseEntity.ok().body(user);
+    	
+    }
+    
+    
+    @RequestMapping(value = "/{userId}/update", method = RequestMethod.PATCH, produces = MediaTypes.HAL_JSON_VALUE)
+    @ApiOperation(value = "Save User Information")
+    @ApiResponses(value = {
+	         @ApiResponse(code = 404, message = "Service not found"),
+	         @ApiResponse(code = 200, message = "Successful retrieval",
+       response = User.class) })    
+    public ResponseEntity<User> updateUser(@ApiParam(value = "The id of the user being retrieved", required = true) @PathVariable("userId") String userId,
+    			@ApiParam(value = "The json for User being updated", required = true) @RequestBody String jsonData) {
+
+    	LOGGER.info("Updating User with id {}", userId);
+
+    	Gson gson = new Gson();
+    	User userFromJson = gson.fromJson(jsonData, User.class);
+    	boolean updateSuccessful = oktaClientUtil.updateUser(userFromJson);
+    	if (updateSuccessful) {
+    		return ResponseEntity.ok().body(userFromJson);
+    	} else {
+        	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+    
+    @RequestMapping(value = "/{userId}/delete", method = RequestMethod.DELETE, produces = MediaTypes.HAL_JSON_VALUE)
+    @ApiOperation(value = "Delete User Information")
+    @ApiResponses(value = {
+	         @ApiResponse(code = 404, message = "Service not found"),
+	         @ApiResponse(code = 200, message = "Successful Delete",
+       response = User.class) })    
+    public ResponseEntity<Boolean> deleteUser(
+    		@ApiParam(value = "The id of the user being deleted", required = true) @PathVariable("userId") String userId) {
+    	LOGGER.info("Deleting User with id {}", userId);
+    	boolean deleteSuccessful = oktaClientUtil.deActivateUser(userId);
+
+        if (deleteSuccessful) {
+			return ResponseEntity.ok().body(Boolean.TRUE);
+        } else {
+        	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Boolean.FALSE);
+        }
     }
     
     
