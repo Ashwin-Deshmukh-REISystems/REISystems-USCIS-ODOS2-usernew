@@ -64,16 +64,11 @@ node (''){
 
   stage 'Fortify Security Code Analysis'
   try {
-    sh "rm -rf maven-sca"
-    sh "ln -sf /opt/HPE_Security/Fortify_SCA_and_Apps_17.20/plugins/maven maven-sca"
-    sh "ln -sf /opt/HPE_Security/Fortify_SCA_and_Apps_17.20/bin/sourceanalyzer sourceanalyzer"
-    sh "tar -xvzf maven-sca/maven-plugin-bin.tar.gz"
-    sh "./mvnw install:install-file -Dfile=pom.xml -DpomFile=maven-sca/pom.xml"
-    sh "./mvnw install:install-file -Dfile=xcodebuild/pom.xml -DpomFile=maven-sca/xcodebuild/pom.xml"
-    sh "./mvnw install:install-file -Dfile=sca-maven-plugin/sca-maven-plugin-17.20.jar -DpomFile=maven-sca/sca-maven-plugin/pom.xml"
-    sh "./sourceanalyzer -b ${env.BUILD_ID} -clean"
-    sh "./sourceanalyzer -b ${env.BUILD_ID} ./mvnw target"
-    sh "./sourceanalyzer -b ${env.BUILD_ID} -scan -f result.fpr"
+    sh "mkdir -p sca-maven-plugin && tar -xvzf /opt/HPE_Security/Fortify_SCA_and_Apps_17.20/plugins/maven/maven-plugin-bin.tar.gz -C sca-maven-plugin"
+    sh "cd sca-maven-plugin && mvn install:install-file -Dfile=pom.xml -DpomFile=pom.xml && mvn install:install-file -Dfile=xcodebuild/pom.xml -DpomFile=xcodebuild/pom.xml && mvn install:install-file -Dfile=sca-maven-plugin/sca-maven-plugin-17.20.jar -DpomFile=sca-maven-plugin/pom.xml"
+    sh "sourceanalyzer -b ${env.BUILD_ID} -clean"
+    sh "sourceanalyzer -b ${env.BUILD_ID} mvn"
+    sh "sourceanalyzer -b ${env.BUILD_ID} -scan -f result.fpr"
   } catch (err) {
       throw err
   }
