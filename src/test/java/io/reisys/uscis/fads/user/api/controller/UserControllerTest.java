@@ -110,6 +110,7 @@ public class UserControllerTest {
 	public void testCreateUser() throws Exception {
 		User user1 = UserTestUtility.createUser("1", "FirstName1", "LastName1", "FirstName1.LastName1@test.com");
 		when(oktaClientUtil.createUser(user1, "Requestor")).thenReturn(user1);
+		when(oktaClientUtil.doesUserWithEmailExist("FirstName1.LastName1@test.com")).thenReturn(Boolean.FALSE);
 		
 		mockMvc.perform(post("/api/v1/user/create").contentType(MediaType.APPLICATION_JSON)
 				.content(UserTestUtility.getUserAsJsonString(user1)))
@@ -122,7 +123,12 @@ public class UserControllerTest {
 				.andExpect(jsonPath("$.role", is(user1.getRole())));
 		
 		Mockito.verify(oktaClientUtil, times(1)).createUser(user1, "Requestor");
-		//TODO add testing for validating data
+		
+		when(oktaClientUtil.doesUserWithEmailExist("FirstName1.LastName1@test.com")).thenReturn(Boolean.TRUE);
+		mockMvc.perform(post("/api/v1/user/create").contentType(MediaType.APPLICATION_JSON)
+				.content(UserTestUtility.getUserAsJsonString(user1)))
+				.andExpect(status().isNotFound());
+		
 	}
 	
 	@Test

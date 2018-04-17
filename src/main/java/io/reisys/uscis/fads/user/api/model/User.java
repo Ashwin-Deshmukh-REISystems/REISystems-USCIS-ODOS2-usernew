@@ -1,5 +1,7 @@
 package io.reisys.uscis.fads.user.api.model;
 
+import java.util.List;
+
 import org.springframework.hateoas.ResourceSupport;
 
 import io.swagger.annotations.ApiModel;
@@ -25,6 +27,8 @@ public class User  extends ResourceSupport {
 	
 	@ApiModelProperty(value="Status of the user", required=true)
 	private String status;
+	
+	private List<String> errorMessages;
 	
 	public String getUserId() {
 		return userId;
@@ -64,7 +68,11 @@ public class User  extends ResourceSupport {
 	public void setRole(String role) {
 		this.role = role;
 	}
-	
-	
+	public List<String> getErrorMessages() {
+		return errorMessages;
+	}
+	public void setErrorMessages(List<String> errorMessages) {
+		this.errorMessages = errorMessages;
+	}
 
 }

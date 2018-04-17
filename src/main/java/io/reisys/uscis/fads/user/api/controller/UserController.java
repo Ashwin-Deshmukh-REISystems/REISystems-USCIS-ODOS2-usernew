@@ -106,10 +106,16 @@ public class UserController {
     	LOGGER.info("Creating User");
     	Gson gson = new Gson();
         User userFromJson = gson.fromJson(jsonData, User.class);
-        //TODO add validation for user information
-        User user = oktaClientUtil.createUser(userFromJson, "Requestor");
-		return ResponseEntity.ok().body(user);
-    	
+        
+        if (userFromJson.getEmail() != null && !oktaClientUtil.doesUserWithEmailExist(userFromJson.getEmail())) {
+        	User user = oktaClientUtil.createUser(userFromJson, "Requestor");
+        	return ResponseEntity.ok().body(user);
+        } else {
+        	userFromJson.setErrorMessages(new ArrayList<String>());
+        	userFromJson.getErrorMessages().add("User with email already exists");
+        	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(userFromJson);
+        }
+        
     }
     
     

@@ -85,6 +85,15 @@ public class OktaClientUtil {
     	return null;
     }
     
+    public boolean doesUserWithEmailExist(String email) {
+    	UserList oktaUserList = oktaClient.listUsers(null, "profile.email eq \"" + email + "\"", null, null, null);
+    	if (oktaUserList != null && oktaUserList.stream().count() > 0) {
+    		return true;
+    	} 
+    	
+    	return false;
+    }
+    
     public User createUser(User user, String groupName) {
     	com.okta.sdk.resource.user.User oktaUser = UserBuilder.instance()
     		    .setEmail(user.getEmail())
