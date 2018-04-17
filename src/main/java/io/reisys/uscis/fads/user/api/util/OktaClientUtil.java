@@ -65,12 +65,12 @@ public class OktaClientUtil {
 		user.setLastName(oktaUser.getProfile().getLastName());
 		user.setEmail(oktaUser.getProfile().getEmail());
 		user.setStatus(oktaUser.getStatus().name());
+		user.setRoles(new ArrayList<String>());
 		GroupList groupList = oktaUser.listGroups();
 		if (groupList != null) {
 			for (Group group: groupList) {
 				if ("OKTA_GROUP".equals(group.getType())) {
-					user.setRole(group.getProfile().getDescription());
-					break;
+					user.getRoles().add(group.getProfile().getDescription());
 				}
 			}
 		}
@@ -94,7 +94,7 @@ public class OktaClientUtil {
     	return false;
     }
     
-    public User createUser(User user, String groupName) {
+    public User createUser(User user) {
     	com.okta.sdk.resource.user.User oktaUser = UserBuilder.instance()
     		    .setEmail(user.getEmail())
     		    .setFirstName(user.getFirstName())
@@ -104,11 +104,12 @@ public class OktaClientUtil {
     		    .setSecurityQuestionAnswer("None of them!")
     		    .setActive(true)
     		    .buildAndCreate(oktaClient);
-    	
-    	GroupList groupList = oktaClient.listGroups(groupName, null, null);
-    	if (groupList != null) {
-    		Group group = groupList.single();
-    		oktaUser.addToGroup(group.getId());
+    	for (String role : user.getRoles() ) {
+	    	GroupList groupList = oktaClient.listGroups(role, null, null);
+	    	if (groupList != null) {
+	    		Group group = groupList.single();
+	    		oktaUser.addToGroup(group.getId());
+	    	}
     	}
     	return createUserFromOktaUser(oktaUser);
     }
@@ -116,7 +117,18 @@ public class OktaClientUtil {
     public boolean deActivateUser(String userId) {
     	com.okta.sdk.resource.user.User oktaUser =  oktaClient.getUser(userId);
     	if (oktaUser != null) {
+    		LOGGER.info("Deactivating User");
     		oktaUser.deactivate();
+    		return true;
+    	} 
+    	return false;
+    }
+    
+    public boolean activateUser(String userId) {
+    	com.okta.sdk.resource.user.User oktaUser =  oktaClient.getUser(userId);
+    	if (oktaUser != null) {
+    		LOGGER.info("Activating User");
+    		oktaUser.activate(false);
     		return true;
     	} 
     	return false;
@@ -128,6 +140,41 @@ public class OktaClientUtil {
     		oktaUser.getProfile().setFirstName(user.getFirstName());
     		oktaUser.getProfile().setLastName(user.getLastName());
     		oktaUser.getProfile().setEmail(user.getEmail());
+    		
+    		List<String> existingOktaRoles = new ArrayList<String>();
+    		List<String> existingOktaRolesToRemove = new ArrayList<String>();
+    		GroupList oktaUserGroupList = oktaUser.listGroups();
+    		for (Group oktaUserGroup : oktaUserGroupList) {
+    			String roleName = oktaUserGroup.getProfile().getDescription();
+    			if (!user.getRoles().contains(roleName)) {
+    				LOGGER.info("Role {} needs to be removed", roleName);
+    				existingOktaRolesToRemove.add(roleName);
+    			}
+    			existingOktaRoles.add(oktaUserGroup.getProfile().getDescription());
+    		}
+    		
+    		user.getRoles().removeAll(existingOktaRoles);
+    		
+    		//Add roles
+        	for (String role : user.getRoles() ) {
+        		LOGGER.info("Role {} needs to be added", role);
+    	    	GroupList groupList = oktaClient.listGroups(role, null, null);
+    	    	if (groupList != null) {
+    	    		Group group = groupList.single();
+    	    		oktaUser.addToGroup(group.getId());
+    	    	}
+        	}
+        	
+        	//Remove roles
+        	for (String roleToRemove: existingOktaRolesToRemove) {
+        		LOGGER.info("Removing Role {} for user", roleToRemove);
+        		GroupList groupList = oktaClient.listGroups(roleToRemove, null, null);
+        		if (groupList != null && groupList.stream().count() == 1) {
+        			Group group = groupList.single();
+        			group.removeUser(user.getUserId());
+        		}
+        	}
+        	
     		oktaUser.update();
     		return true;
     	}

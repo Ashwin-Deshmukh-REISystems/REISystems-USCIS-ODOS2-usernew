@@ -23,7 +23,7 @@ public class User  extends ResourceSupport {
 	private String email;
 	
 	@ApiModelProperty(value="Role name for the user", required=true)
-	private String role;
+	private List<String> roles;
 	
 	@ApiModelProperty(value="Status of the user", required=true)
 	private String status;
@@ -60,13 +60,11 @@ public class User  extends ResourceSupport {
 	public void setStatus(String status) {
 		this.status = status;
 	}
-
-	public String getRole() {
-		return role;
+	public List<String> getRoles() {
+		return roles;
 	}
-
-	public void setRole(String role) {
-		this.role = role;
+	public void setRoles(List<String> roles) {
+		this.roles = roles;
 	}
 	public List<String> getErrorMessages() {
 		return errorMessages;

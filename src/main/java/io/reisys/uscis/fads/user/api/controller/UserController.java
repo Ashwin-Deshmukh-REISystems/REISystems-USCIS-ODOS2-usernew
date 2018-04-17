@@ -51,7 +51,7 @@ public class UserController {
 
     	LOGGER.info("Retrieving list of Users");
     	
-    	List<User> userList = oktaClientUtil.getAllActiveUsersForGroup("Requestor");
+    	List<User> userList = oktaClientUtil.getAllActiveUsers();
     	if (userList != null ) {
 	    	for(User user: userList) {
 	    		assembleLinks(user);
@@ -108,7 +108,7 @@ public class UserController {
         User userFromJson = gson.fromJson(jsonData, User.class);
         
         if (userFromJson.getEmail() != null && !oktaClientUtil.doesUserWithEmailExist(userFromJson.getEmail())) {
-        	User user = oktaClientUtil.createUser(userFromJson, "Requestor");
+        	User user = oktaClientUtil.createUser(userFromJson);
         	return ResponseEntity.ok().body(user);
         } else {
         	userFromJson.setErrorMessages(new ArrayList<String>());
@@ -134,7 +134,8 @@ public class UserController {
     	User userFromJson = gson.fromJson(jsonData, User.class);
     	boolean updateSuccessful = oktaClientUtil.updateUser(userFromJson);
     	if (updateSuccessful) {
-    		return ResponseEntity.ok().body(userFromJson);
+    		User savedUser = oktaClientUtil.getUser(userId);
+    		return ResponseEntity.ok().body(savedUser);
     	} else {
         	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
@@ -150,6 +151,24 @@ public class UserController {
     		@ApiParam(value = "The id of the user being deleted", required = true) @PathVariable("userId") String userId) {
     	LOGGER.info("Deleting User with id {}", userId);
     	boolean deleteSuccessful = oktaClientUtil.deActivateUser(userId);
+
+        if (deleteSuccessful) {
+			return ResponseEntity.ok().body(Boolean.TRUE);
+        } else {
+        	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Boolean.FALSE);
+        }
+    }
+    
+    @RequestMapping(value = "/{userId}/activate", method = RequestMethod.DELETE, produces = MediaTypes.HAL_JSON_VALUE)
+    @ApiOperation(value = "Activate User Information")
+    @ApiResponses(value = {
+	         @ApiResponse(code = 404, message = "Service not found"),
+	         @ApiResponse(code = 200, message = "Successful Delete",
+       response = User.class) })    
+    public ResponseEntity<Boolean> activateUser(
+    		@ApiParam(value = "The id of the user being activated", required = true) @PathVariable("userId") String userId) {
+    	LOGGER.info("Deleting User with id {}", userId);
+    	boolean deleteSuccessful = oktaClientUtil.activateUser(userId);
 
         if (deleteSuccessful) {
 			return ResponseEntity.ok().body(Boolean.TRUE);
