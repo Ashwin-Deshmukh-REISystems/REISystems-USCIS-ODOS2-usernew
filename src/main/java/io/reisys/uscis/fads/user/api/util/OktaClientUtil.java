@@ -90,7 +90,7 @@ public class OktaClientUtil {
     		    .setEmail(user.getEmail())
     		    .setFirstName(user.getFirstName())
     		    .setLastName(user.getLastName())
-    		    .setPassword("Password".toCharArray())
+    		    .setPassword("Pa$$w0rd".toCharArray())
     		    .setSecurityQuestion("Favorite security question?")
     		    .setSecurityQuestionAnswer("None of them!")
     		    .setActive(true)
