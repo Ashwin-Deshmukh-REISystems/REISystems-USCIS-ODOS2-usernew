@@ -1,17 +1,10 @@
 // version var for entire scope
 def version = ''
 
-node ('') {
-  env.DEV_PROJECT = "dev"
-  env.APP_NAME = "api" //"${env.JOB_NAME}".replaceAll(/-?${env.PROJECT_NAME}-?/, '').replaceAll(/-?pipeline-?/, '')
-  // these are defaults that will help run openshift automation
-  // env.OCP_API_SERVER = "${env.OPENSHIFT_API_URL}"
-  // env.OCP_TOKEN = readFile('/var/run/secrets/kubernetes.io/serviceaccount/token').trim()
-  env.sonar = ""
-}
-
 // Run on docker nodes
 node (''){
+
+  env.sonar = ""
 
   env.PATH = "${tool 'M3'}/bin:${env.PATH}"
   env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
@@ -37,7 +30,7 @@ node (''){
       //}
       env.VERSION=version
     } catch (err) {
-      echo "Error encountered: ${err}"
+      //echo "Error encountered: ${err}"
       throw err
     }      
   }
@@ -46,7 +39,7 @@ node (''){
     try {
       sh "mvn -B clean package"
     } catch (err) {
-      echo "Error encountered: ${err}"
+      //echo "Error encountered: ${err}"
       throw err
     }
   }
@@ -56,8 +49,17 @@ node (''){
       withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
         sh "mvn -B -X sonar:sonar -Dsonar.login=$SONAR_TOKEN -Dsonar.host.url=http://sonarqube.uscis-fads.local"
       }
+
+    //timeout(time: 2, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
+    //  def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+    //  if (qg.status != 'OK') {
+    //    echo "SonarQube webhook not working."
+    //    error "Pipeline aborted due to quality gate failure: ${qg.status}"
+    //  }
+    //}
+
     } catch (err) {
-      echo "Error encountered: ${err}"
+      //echo "Error encountered: ${err}"
       throw err
     }
   }
@@ -81,16 +83,16 @@ node (''){
         app_image.push("dev")
       }
     } catch (err) {
-      echo "Error encountered: ${err}"
+      //echo "Error encountered: ${err}"
       throw err
     }
   }
   
   stage('Twistlock Scan') {
     try {
-      // twistlockScan ca: '', cert: '', compliancePolicy: 'high', dockerAddress: 'unix:///var/run/docker.sock', gracePeriodDays: 0, ignoreImageBuildTime: true, image: "uscis-odos/user:${version}", key: '', logLevel: 'true', policy: 'high', requirePackageUpdate: false, timeout: 10
+      twistlockScan ca: '', cert: '', compliancePolicy: 'high', dockerAddress: 'unix:///var/run/docker.sock', gracePeriodDays: 0, ignoreImageBuildTime: true, image: "uscis-odos/user:${version}", key: '', logLevel: 'true', policy: 'high', requirePackageUpdate: false, timeout: 10
     } catch (err) {
-      echo "Error encountered: ${err}"
+      //echo "Error encountered: ${err}"
       throw err
     }
   }
@@ -102,7 +104,7 @@ node (''){
         def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-odos/user:dev --insecure=true --confirm')
         echo "Result: ${result.out}"
       } catch ( err ) {
-        echo "Error encountered: ${err}"
+        //echo "Error encountered: ${err}"
         throw err
       }
     }
