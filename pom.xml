@@ -18,9 +18,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-                <sonar.sonar.junit.reportPaths>target/surefire-reports</sonar.sonar.junit.reportPaths>
-    		<sonar.host.url>https://sonarqube.uscis-fads.reisys.io</sonar.host.url>
-    		<sonar.login>524f12253affbb1d8b97ce32af6c4fac132bd711</sonar.login>
+        <sonar.sonar.junit.reportPaths>target/surefire-reports</sonar.sonar.junit.reportPaths>
+    	<sonar.host.url>https://sonarqube.uscis-fads.reisys.io</sonar.host.url>
+    	<sonar.login>524f12253affbb1d8b97ce32af6c4fac132bd711</sonar.login>
+    	<sonar.exclusions>src/main/java/io/reisys/uscis/odos/user/api/config/*,src/main/java/io/reisys/uscis/odos/user/api/util/*,src/main/java/io/reisys/uscis/odos/user/api/ApiApplication*</sonar.exclusions>
 	</properties>
 
 	<dependencies>
