@@ -35,7 +35,7 @@ public class OktaClientUtil {
 	    	}
 	    	return userList;
     	}
-    	return null;
+    	return new ArrayList<User>();
     }
     
     public List<User> getAllActiveUsersForGroup(String groupName) {
@@ -55,7 +55,7 @@ public class OktaClientUtil {
         	}
     	}
 
-    	return null;
+    	return new ArrayList<User>();
     }
     
     private User createUserFromOktaUser(com.okta.sdk.resource.user.User oktaUser) {
@@ -104,13 +104,8 @@ public class OktaClientUtil {
     		    .setSecurityQuestionAnswer("None of them!")
     		    .setActive(true)
     		    .buildAndCreate(oktaClient);
-    	for (String role : user.getRoles() ) {
-	    	GroupList groupList = oktaClient.listGroups(role, null, null);
-	    	if (groupList != null) {
-	    		Group group = groupList.single();
-	    		oktaUser.addToGroup(group.getId());
-	    	}
-    	}
+    	//Add roles
+    	addRolesToUser(user, oktaUser);
     	return createUserFromOktaUser(oktaUser);
     }
     
@@ -154,30 +149,39 @@ public class OktaClientUtil {
     		}
     		
     		user.getRoles().removeAll(existingOktaRoles);
-    		
     		//Add roles
-        	for (String role : user.getRoles() ) {
-        		LOGGER.info("Role {} needs to be added", role);
-    	    	GroupList groupList = oktaClient.listGroups(role, null, null);
-    	    	if (groupList != null) {
-    	    		Group group = groupList.single();
-    	    		oktaUser.addToGroup(group.getId());
-    	    	}
-        	}
+    		addRolesToUser(user, oktaUser);
         	
-        	//Remove roles
-        	for (String roleToRemove: existingOktaRolesToRemove) {
-        		LOGGER.info("Removing Role {} for user", roleToRemove);
-        		GroupList groupList = oktaClient.listGroups(roleToRemove, null, null);
-        		if (groupList != null && groupList.stream().count() == 1) {
-        			Group group = groupList.single();
-        			group.removeUser(user.getUserId());
-        		}
-        	}
+    		//Remove roles
+        	removeRolesForUser(user, existingOktaRolesToRemove);
         	
     		oktaUser.update();
     		return true;
     	}
     	return false;
     }
+
+	private void removeRolesForUser(User user, List<String> existingOktaRolesToRemove) {
+		
+		for (String roleToRemove: existingOktaRolesToRemove) {
+			LOGGER.info("Removing Role {} for user", roleToRemove);
+			GroupList groupList = oktaClient.listGroups(roleToRemove, null, null);
+			if (groupList != null && groupList.stream().count() == 1) {
+				Group group = groupList.single();
+				group.removeUser(user.getUserId());
+			}
+		}
+	}
+
+	private void addRolesToUser(User user, com.okta.sdk.resource.user.User oktaUser) {
+		
+		for (String role : user.getRoles() ) {
+			LOGGER.info("Role {} needs to be added", role);
+			GroupList groupList = oktaClient.listGroups(role, null, null);
+			if (groupList != null) {
+				Group group = groupList.single();
+				oktaUser.addToGroup(group.getId());
+			}
+		}
+	}
 }
