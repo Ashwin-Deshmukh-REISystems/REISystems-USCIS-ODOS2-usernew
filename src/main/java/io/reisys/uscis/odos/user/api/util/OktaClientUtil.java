@@ -26,16 +26,13 @@ public class OktaClientUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(OktaClientUtil.class);
     
     public List<User> getAllActiveUsers() {
-    	UserList oktaUserList = oktaClient.listUsers();
-    	if (oktaUserList != null ) {
-    		LOGGER.info("Count of all users from Okta {}", oktaUserList.stream().count());
-    		List<User> userList = new ArrayList<User>();
-	    	for(com.okta.sdk.resource.user.User oktaUser: oktaUserList) {
-	    		userList.add(createUserFromOktaUser(oktaUser));
-	    	}
-	    	return userList;
-    	}
-    	return new ArrayList<User>();
+    	List<User> userList = new ArrayList<User>();
+    	userList.addAll(getAllActiveUsersForGroup("Requestor"));
+    	userList.addAll(getAllActiveUsersForGroup("Administrator"));
+    	userList.addAll(getAllActiveUsersForGroup("Reservation Manager"));
+    	
+    	LOGGER.info("Total Count of Active Users {}", userList.size());
+    	return userList;
     }
     
     public List<User> getAllActiveUsersForGroup(String groupName) {
