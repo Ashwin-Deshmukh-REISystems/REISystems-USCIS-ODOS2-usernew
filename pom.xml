@@ -5,8 +5,8 @@
 	<version>0.0.1</version>
 	<packaging>jar</packaging>	
 	
-    <name>USCIS ODOS2 API</name>
-    <description>USCIS ODOS2 API</description>
+    <name>USCIS ODOS2 USER API</name>
+    <description>USCIS ODOS2 USER API</description>
     
     <parent>
 		<groupId>org.springframework.boot</groupId>
@@ -18,8 +18,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-    	<sonar.host.url>https://sonarqube.uscis-fads.reisys.io</sonar.host.url>
-    	<sonar.login>524f12253affbb1d8b97ce32af6c4fac132bd711</sonar.login>
+                <sonar.sonar.junit.reportPaths>target/surefire-reports</sonar.sonar.junit.reportPaths>
+    		<sonar.host.url>https://sonarqube.uscis-fads.reisys.io</sonar.host.url>
+    		<sonar.login>524f12253affbb1d8b97ce32af6c4fac132bd711</sonar.login>
 	</properties>
 
 	<dependencies>
