@@ -1,4 +1,4 @@
-package io.reisys.uscis.fads.user.api.model;
+package io.reisys.uscis.odos.user.api.model;
 
 import java.util.List;
 

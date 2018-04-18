@@ -1,10 +1,10 @@
-package io.reisys.uscis.fads.user.api.utils;
+package io.reisys.uscis.odos.user.api.utils;
 
 import java.util.Arrays;
 
 import com.google.gson.Gson;
 
-import io.reisys.uscis.fads.user.api.model.User;
+import io.reisys.uscis.odos.user.api.model.User;
 
 public class UserTestUtility {
 

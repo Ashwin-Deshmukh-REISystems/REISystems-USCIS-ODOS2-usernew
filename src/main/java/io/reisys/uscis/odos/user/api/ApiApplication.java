@@ -1,4 +1,4 @@
-package io.reisys.uscis.fads.user.api;
+package io.reisys.uscis.odos.user.api;
 
 import java.util.Collections;
 

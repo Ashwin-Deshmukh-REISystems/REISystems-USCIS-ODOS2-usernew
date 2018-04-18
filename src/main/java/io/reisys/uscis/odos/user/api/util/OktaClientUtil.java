@@ -1,4 +1,4 @@
-package io.reisys.uscis.fads.user.api.util;
+package io.reisys.uscis.odos.user.api.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ import com.okta.sdk.resource.user.UserBuilder;
 import com.okta.sdk.resource.user.UserList;
 import com.okta.sdk.resource.user.UserStatus;
 
-import io.reisys.uscis.fads.user.api.model.User;
+import io.reisys.uscis.odos.user.api.model.User;
 
 @Component
 public class OktaClientUtil {

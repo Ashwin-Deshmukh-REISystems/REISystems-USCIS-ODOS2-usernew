@@ -1,4 +1,4 @@
-package io.reisys.uscis.fads.user.api.config;
+package io.reisys.uscis.odos.user.api.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

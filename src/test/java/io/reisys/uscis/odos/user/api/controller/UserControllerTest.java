@@ -1,4 +1,4 @@
-package io.reisys.uscis.fads.user.api.controller;
+package io.reisys.uscis.odos.user.api.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -28,9 +28,10 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import io.reisys.uscis.fads.user.api.model.User;
-import io.reisys.uscis.fads.user.api.util.OktaClientUtil;
-import io.reisys.uscis.fads.user.api.utils.UserTestUtility;
+import io.reisys.uscis.odos.user.api.controller.UserController;
+import io.reisys.uscis.odos.user.api.model.User;
+import io.reisys.uscis.odos.user.api.util.OktaClientUtil;
+import io.reisys.uscis.odos.user.api.utils.UserTestUtility;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class UserControllerTest {

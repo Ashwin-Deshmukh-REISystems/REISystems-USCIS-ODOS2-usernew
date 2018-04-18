@@ -1,4 +1,4 @@
-package io.reisys.uscis.fads.user.api.controller;
+package io.reisys.uscis.odos.user.api.controller;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 
-import io.reisys.uscis.fads.user.api.model.User;
-import io.reisys.uscis.fads.user.api.util.OktaClientUtil;
+import io.reisys.uscis.odos.user.api.model.User;
+import io.reisys.uscis.odos.user.api.util.OktaClientUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -46,7 +46,7 @@ public class UserController {
     @ApiResponses(value = {
 	         @ApiResponse(code = 404, message = "Service not found"),
 	         @ApiResponse(code = 200, message = "Successful retrieval",
-	            response = io.reisys.uscis.fads.user.api.model.User.class, responseContainer = "List") })    
+	            response = io.reisys.uscis.odos.user.api.model.User.class, responseContainer = "List") })    
     public ResponseEntity<Resources<User>>  getUsers() {
 
     	LOGGER.info("Retrieving list of Users");
