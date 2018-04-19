@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.gson.Gson;
 
 import io.reisys.uscis.odos.user.api.model.User;
+import io.reisys.uscis.odos.user.api.util.AccessManagementUtil;
 import io.reisys.uscis.odos.user.api.util.OktaClientUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -39,6 +41,9 @@ public class UserController {
     @Autowired
 	private OktaClientUtil oktaClientUtil;
     
+    @Autowired
+    private AccessManagementUtil accessManagementUtil;
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
     
     @RequestMapping(method = RequestMethod.GET, produces = MediaTypes.HAL_JSON_VALUE)
@@ -47,24 +52,29 @@ public class UserController {
 	         @ApiResponse(code = 404, message = "Service not found"),
 	         @ApiResponse(code = 200, message = "Successful retrieval",
 	            response = io.reisys.uscis.odos.user.api.model.User.class, responseContainer = "List") })    
-    public ResponseEntity<Resources<User>>  getUsers() {
+    public ResponseEntity<Resources<User>>  getUsers(
+    		@ApiParam(value = "The access token to validate", required = true) @RequestHeader(value = "X-Auth-Token", required = true) String accessToken
+    		) {
 
     	LOGGER.info("Retrieving list of Users");
-    	
+    	String userIdFromToken = accessManagementUtil.getUserIdFromToken(accessToken);
+    	if (userIdFromToken == null) {
+    		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    	}
     	List<User> userList = oktaClientUtil.getAllActiveUsers();
     	if (userList != null ) {
 	    	for(User user: userList) {
-	    		assembleLinks(user);
+	    		assembleLinks(accessToken, user);
 	    	}
 	    	
 	    	List<Link> links = new ArrayList<>();
 		    UserController builder = methodOn(UserController.class);
 		
 	        // self
-	        links.add(linkTo(builder.getUsers()).withSelfRel());
+	        links.add(linkTo(builder.getUsers(accessToken)).withSelfRel());
 	
 	        // search
-	        ControllerLinkBuilder searchLinkBuilder = linkTo(builder.getUsers());
+	        ControllerLinkBuilder searchLinkBuilder = linkTo(builder.getUsers(accessToken));
 	        Link searchLink = new Link(searchLinkBuilder.toString() , "search");
 	        links.add(searchLink);
 	
@@ -81,13 +91,19 @@ public class UserController {
 	         @ApiResponse(code = 404, message = "Service not found"),
 	        @ApiResponse(code = 200, message = "Successful retrieval",
 	            response = User.class) })      
-    public ResponseEntity<User> getUser(@ApiParam(value = "The id of the user being retrieved", required = true) @PathVariable("userId") String userId) {
+    public ResponseEntity<User> getUser(
+    		@ApiParam(value = "The access token to validate", required = true) @RequestHeader(value = "X-Auth-Token", required = true) String accessToken,
+    		@ApiParam(value = "The id of the user being retrieved", required = true) @PathVariable("userId") String userId) {
     	LOGGER.info("Retrieving User with id {}", userId);
+    	String userIdFromToken = accessManagementUtil.getUserIdFromToken(accessToken);
+    	if (userIdFromToken == null) {
+    		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    	}
     	
     	User user = oktaClientUtil.getUser(userId);
     	if (user != null) {
     		LOGGER.info("User exists ");
-    		assembleLinks(user);
+    		assembleLinks(accessToken, user);
         	return ResponseEntity.ok().body(user);
     	} else {
     		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -101,9 +117,15 @@ public class UserController {
 	         @ApiResponse(code = 404, message = "Service not found"),
 	         @ApiResponse(code = 200, message = "Successful retrieval",
        response = User.class) })    
-    public ResponseEntity<User> createUser(@ApiParam(value = "The json for User being created", required = true) @RequestBody String jsonData) {
+    public ResponseEntity<User> createUser(
+    		@ApiParam(value = "The access token to validate", required = true) @RequestHeader(value = "X-Auth-Token", required = true) String accessToken,
+    		@ApiParam(value = "The json for User being created", required = true) @RequestBody String jsonData) {
 
     	LOGGER.info("Creating User");
+    	String userIdFromToken = accessManagementUtil.getUserIdFromToken(accessToken);
+    	if (userIdFromToken == null) {
+    		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    	}
     	Gson gson = new Gson();
         User userFromJson = gson.fromJson(jsonData, User.class);
         
@@ -125,11 +147,17 @@ public class UserController {
 	         @ApiResponse(code = 404, message = "Service not found"),
 	         @ApiResponse(code = 200, message = "Successful retrieval",
        response = User.class) })    
-    public ResponseEntity<User> updateUser(@ApiParam(value = "The id of the user being retrieved", required = true) @PathVariable("userId") String userId,
+    public ResponseEntity<User> updateUser(
+    		@ApiParam(value = "The access token to validate", required = true) @RequestHeader(value = "X-Auth-Token", required = true) String accessToken,
+    		@ApiParam(value = "The id of the user being retrieved", required = true) @PathVariable("userId") String userId,
     			@ApiParam(value = "The json for User being updated", required = true) @RequestBody String jsonData) {
 
     	LOGGER.info("Updating User with id {}", userId);
-
+    	String userIdFromToken = accessManagementUtil.getUserIdFromToken(accessToken);
+    	if (userIdFromToken == null) {
+    		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    	}
+    	
     	Gson gson = new Gson();
     	User userFromJson = gson.fromJson(jsonData, User.class);
     	boolean updateSuccessful = oktaClientUtil.updateUser(userFromJson);
@@ -148,8 +176,14 @@ public class UserController {
 	         @ApiResponse(code = 200, message = "Successful Delete",
        response = User.class) })    
     public ResponseEntity<Boolean> deleteUser(
+    		@ApiParam(value = "The access token to validate", required = true) @RequestHeader(value = "X-Auth-Token", required = true) String accessToken,
     		@ApiParam(value = "The id of the user being deleted", required = true) @PathVariable("userId") String userId) {
     	LOGGER.info("Deleting User with id {}", userId);
+    	String userIdFromToken = accessManagementUtil.getUserIdFromToken(accessToken);
+    	if (userIdFromToken == null) {
+    		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    	}
+    	
     	boolean deleteSuccessful = oktaClientUtil.deActivateUser(userId);
 
         if (deleteSuccessful) {
@@ -166,8 +200,14 @@ public class UserController {
 	         @ApiResponse(code = 200, message = "Successful Delete",
        response = User.class) })    
     public ResponseEntity<Boolean> activateUser(
+    		@ApiParam(value = "The access token to validate", required = true) @RequestHeader(value = "X-Auth-Token", required = true) String accessToken,
     		@ApiParam(value = "The id of the user being activated", required = true) @PathVariable("userId") String userId) {
     	LOGGER.info("Deleting User with id {}", userId);
+    	String userIdFromToken = accessManagementUtil.getUserIdFromToken(accessToken);
+    	if (userIdFromToken == null) {
+    		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    	}
+    	
     	boolean deleteSuccessful = oktaClientUtil.activateUser(userId);
 
         if (deleteSuccessful) {
@@ -178,7 +218,7 @@ public class UserController {
     }
     
     
-    protected void assembleLinks(User user) {
-    	user.add(linkTo(methodOn(UserController.class).getUser(user.getUserId())).withSelfRel());
+    protected void assembleLinks(String accessToken, User user) {
+    	user.add(linkTo(methodOn(UserController.class).getUser(accessToken, user.getUserId())).withSelfRel());
     }
 }
