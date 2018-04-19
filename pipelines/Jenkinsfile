@@ -111,4 +111,31 @@ node (''){
     }
   }
 
+  stage('Acceptance Tests') {
+    try {
+
+      // checkout acceptance tests repo to acceptance-tests dir in the current workspace
+      checkout([$class: 'GitSCM', 
+        branches: [[name: '*/develop']], 
+        doGenerateSubmoduleConfigurations: false, 
+        extensions: [[
+          $class: 'RelativeTargetDirectory', 
+          relativeTargetDir: 'acceptance-tests'
+        ]], 
+        submoduleCfg: [], 
+        userRemoteConfigs: [[
+          url: 'git@github.com:REI-Systems/REISystems-USCIS-ODOS2-Testing.git',
+	  credentialsId: 'github-odos-tests'
+	]]
+      ])
+    
+      // run acceptance tests
+      sh "cd acceptance-tests && mvn verify serenity:aggregate -Dtest=ODOSRunner -Ddriver.type=remote -Dremote.driver.url=http://selenium-master.uscis-fads.local:4444/wd/hub -Ddriver.browser=Firefox -Dapplication.url=http://ui-dev.apps.ocp.uscis-fads.reisys.io/login"
+
+    } catch (err) {
+      echo "Error encountered: ${err}"
+      throw err
+    }
+  }
+
 }
