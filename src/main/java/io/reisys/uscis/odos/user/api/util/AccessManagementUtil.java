@@ -53,6 +53,7 @@ public class AccessManagementUtil {
 	
 	public String getUserIdFromToken(String accessToken) {
 	    MultiValueMap<String, String> paramMap= new LinkedMultiValueMap<String, String>();
+	    LOGGER.info("Client id is "+ environment.getProperty("OKTA_CLIENT_ID") );
 	    paramMap.add("client_id", environment.getProperty("OKTA_CLIENT_ID"));
 	    paramMap.add("token", accessToken);
 	    
