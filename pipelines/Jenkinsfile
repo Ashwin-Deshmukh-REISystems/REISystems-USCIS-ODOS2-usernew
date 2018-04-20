@@ -1,0 +1,141 @@
+// version var for entire scope
+def version = ''
+
+// Run on docker nodes
+node (''){
+
+  env.sonar = ""
+
+  env.PATH = "${tool 'M3'}/bin:${env.PATH}"
+  env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
+  
+  def app_image
+
+  //Use try catch to set build success criteria, set true to start
+  currentBuild.result = "SUCCESS"
+
+  stage('Checkout') {
+    try {
+      checkout scm
+      
+      // Keep git hash in var
+      sh "git rev-parse HEAD > commit-id"
+      env.GIT_COMMIT = readFile('commit-id')
+      sh 'rm -f commit-id'
+
+      //if ("${env.BRANCH_NAME}" != "master") {
+        version = "0.0.1-unstable${env.BUILD_NUMBER}"
+      //} else {
+      //  version = "0.1.0"
+      //}
+      env.VERSION=version
+    } catch (err) {
+      //echo "Error encountered: ${err}"
+      throw err
+    }      
+  }
+  
+  stage('Build') {
+    try {
+      sh "mvn -B clean package"
+    } catch (err) {
+      //echo "Error encountered: ${err}"
+      throw err
+    }
+  }
+
+  stage('SonarQube Code Analysis') {
+    try {
+
+      withSonarQubeEnv('SonarQube') {
+        sh "mvn -B sonar:sonar"
+      }
+
+      timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
+        def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+        if (qg.status != 'OK') {
+          //echo "SonarQube webhook not working."
+          error "Pipeline aborted due to quality gate failure: ${qg.status}"
+        }
+      }
+
+    } catch (err) {
+      //echo "Error encountered: ${err}"
+      throw err
+    }
+  }
+
+  stage 'Fortify Security Code Analysis'
+  try {
+    sh "mkdir -p sca-maven-plugin && tar -xvzf /opt/HPE_Security/Fortify_SCA_and_Apps_17.20/plugins/maven/maven-plugin-bin.tar.gz -C sca-maven-plugin"
+    sh "cd sca-maven-plugin && mvn install:install-file -Dfile=pom.xml -DpomFile=pom.xml && mvn install:install-file -Dfile=xcodebuild/pom.xml -DpomFile=xcodebuild/pom.xml && mvn install:install-file -Dfile=sca-maven-plugin/sca-maven-plugin-17.20.jar -DpomFile=sca-maven-plugin/pom.xml"
+    sh "sourceanalyzer -b ${env.BUILD_ID} -clean"
+    sh "sourceanalyzer -b ${env.BUILD_ID} mvn"
+    sh "sourceanalyzer -b ${env.BUILD_ID} -scan -f result.fpr"
+  } catch (err) {
+      throw err
+  }
+
+  stage('Build Docker Image') {
+    try {
+      app_image = docker.build("uscis-odos/user")
+      docker.withRegistry('https://nexus.uscis-fads.local:9443', 'jenkins-nexus-auth') {
+        app_image.push(version)
+        app_image.push("dev")
+      }
+    } catch (err) {
+      //echo "Error encountered: ${err}"
+      throw err
+    }
+  }
+  
+  stage('Twistlock Scan') {
+    try {
+      twistlockScan ca: '', cert: '', compliancePolicy: 'high', dockerAddress: 'unix:///var/run/docker.sock', gracePeriodDays: 0, ignoreImageBuildTime: true, image: "uscis-odos/user:${version}", key: '', logLevel: 'true', policy: 'high', requirePackageUpdate: false, timeout: 10
+    } catch (err) {
+      //echo "Error encountered: ${err}"
+      throw err
+    }
+  }
+
+  stage('Deploy to Dev') {
+    openshift.withCluster( 'dev' ) {
+      //openshift.verbose()
+      try {
+        def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-odos/user:dev --insecure=true --confirm')
+        echo "Result: ${result.out}"
+      } catch ( err ) {
+        //echo "Error encountered: ${err}"
+        throw err
+      }
+    }
+  }
+
+  stage('Acceptance Tests') {
+    try {
+
+      // checkout acceptance tests repo to acceptance-tests dir in the current workspace
+      checkout([$class: 'GitSCM', 
+        branches: [[name: '*/develop']], 
+        doGenerateSubmoduleConfigurations: false, 
+        extensions: [[
+          $class: 'RelativeTargetDirectory', 
+          relativeTargetDir: 'acceptance-tests'
+        ]], 
+        submoduleCfg: [], 
+        userRemoteConfigs: [[
+          url: 'git@github.com:REI-Systems/REISystems-USCIS-ODOS2-Testing.git',
+	  credentialsId: 'github-odos-tests'
+	]]
+      ])
+    
+      // run acceptance tests
+      sh "cd acceptance-tests && mvn verify serenity:aggregate -Dtest=ODOSRunner -Ddriver.type=remote -Dremote.driver.url=http://selenium-master.uscis-fads.local:4444/wd/hub -Ddriver.browser=Firefox -Dapplication.url=http://ui-dev.apps.ocp.uscis-fads.reisys.io/login"
+
+    } catch (err) {
+      echo "Error encountered: ${err}"
+      throw err
+    }
+  }
+
+}
