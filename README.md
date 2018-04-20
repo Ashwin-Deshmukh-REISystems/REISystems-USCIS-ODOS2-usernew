@@ -1,7 +1,7 @@
 # REISystems-USCIS-ODOS2-user 
 
 ### Local API Endpoint
-//--//--//
+ - /api/v1/user
 
 ### How to build
 `./mvnw clean package`
