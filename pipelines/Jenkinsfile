@@ -1,141 +1,255 @@
-// version var for entire scope
 def version = ''
+def unique_id = ''
+
+properties([
+  buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')),
+  disableConcurrentBuilds()
+])
+
+node ('') {
+  env.DEV_PROJECT = "dev"
+  env.APP_NAME = "user"
+  env.sonar = ""
+}
 
 // Run on docker nodes
 node (''){
 
-  env.sonar = ""
+  try {
+    def nodejs_version = 'carbon'
+    def ocDir = tool "oc-3.6.1"
+    def app_image
 
-  env.PATH = "${tool 'M3'}/bin:${env.PATH}"
-  env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
-  
-  def app_image
-
-  //Use try catch to set build success criteria, set true to start
-  currentBuild.result = "SUCCESS"
-
-  stage('Checkout') {
-    try {
-      checkout scm
-      
-      // Keep git hash in var
-      sh "git rev-parse HEAD > commit-id"
-      env.GIT_COMMIT = readFile('commit-id')
-      sh 'rm -f commit-id'
-
-      //if ("${env.BRANCH_NAME}" != "master") {
-        version = "0.0.1-unstable${env.BUILD_NUMBER}"
-      //} else {
-      //  version = "0.1.0"
-      //}
-      env.VERSION=version
-    } catch (err) {
-      //echo "Error encountered: ${err}"
-      throw err
-    }      
-  }
-  
-  stage('Build') {
-    try {
-      sh "mvn -B clean package"
-    } catch (err) {
-      //echo "Error encountered: ${err}"
-      throw err
+    stage('Initialize') {
+      echo 'Initializing...'
+      def node = tool name: "${nodejs_version}", type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+      env.PATH = "${node}/bin:${env.PATH}"
+      env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
     }
-  }
 
-  stage('SonarQube Code Analysis') {
-    try {
+    stage('Checkout') {
+      checkout scm
 
-      withSonarQubeEnv('SonarQube') {
-        sh "mvn -B sonar:sonar"
+      if ( env.BRANCH_NAME == 'develop' ) {
+          version = "0.0.1-dev"
+      } else if ( env.BRANCH_NAME == 'master' ) {
+          version = "0.0.1"
+      } else {
+          def subName = env.BRANCH_NAME.replaceAll('/','')
+          version = "0.0.1-${subName}"
       }
 
-      timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
-        def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
-        if (qg.status != 'OK') {
-          //echo "SonarQube webhook not working."
-          error "Pipeline aborted due to quality gate failure: ${qg.status}"
+      env.VERSION=version
+      currentBuild.displayName = version
+      unique_id = "${env.BUILD_NUMBER}"
+    }
+
+    if ( env.BRANCH_NAME.startsWith('PR-') ) {
+
+      // extract id from PR
+      //pull_request_id = env.BRANCH_NAME.findAll( /\d+/ )*.toInteger()
+
+      // create a docker tag with PR number
+
+    }
+
+    if ( env.BRANCH_NAME != 'master' ) {
+
+      stage('Build') {
+        sh "npm install"
+      }
+
+      stage('Unit Tests') {
+        sh "CI=true npm run test -- --code-coverage"
+      }
+
+      stage('SonarQube Code Analysis') {
+
+        def scannerHome = tool 'SonarScanner';
+        withSonarQubeEnv('SonarQube') {
+          sh "${scannerHome}/bin/sonar-scanner"
+        }
+
+        timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
+          def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+            if (qg.status == 'ERROR') {
+              echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+              error "Pipeline aborted due to quality gate failure: ${qg.status}"
+            }
         }
       }
 
-    } catch (err) {
-      //echo "Error encountered: ${err}"
-      throw err
-    }
-  }
+      if ( env.BRANCH_NAME == 'develop' ) {
 
-  stage 'Fortify Security Code Analysis'
-  try {
-    sh "mkdir -p sca-maven-plugin && tar -xvzf /opt/HPE_Security/Fortify_SCA_and_Apps_17.20/plugins/maven/maven-plugin-bin.tar.gz -C sca-maven-plugin"
-    sh "cd sca-maven-plugin && mvn install:install-file -Dfile=pom.xml -DpomFile=pom.xml && mvn install:install-file -Dfile=xcodebuild/pom.xml -DpomFile=xcodebuild/pom.xml && mvn install:install-file -Dfile=sca-maven-plugin/sca-maven-plugin-17.20.jar -DpomFile=sca-maven-plugin/pom.xml"
-    sh "sourceanalyzer -b ${env.BUILD_ID} -clean"
-    sh "sourceanalyzer -b ${env.BUILD_ID} mvn"
-    sh "sourceanalyzer -b ${env.BUILD_ID} -scan -f result.fpr"
-  } catch (err) {
-      throw err
-  }
+        stage('Build Docker Image') {
+          sh "rm -rf node_modules"
 
-  stage('Build Docker Image') {
-    try {
-      app_image = docker.build("uscis-odos/user")
-      docker.withRegistry('https://nexus.uscis-fads.local:9443', 'jenkins-nexus-auth') {
-        app_image.push(version)
-        app_image.push("dev")
+          app_image = docker.build("uscis-odos/user")
+
+          docker.withRegistry('https://nexus.uscis-fads.local:9443', 'jenkins-nexus-auth') {
+            app_image.push(version)
+            app_image.push("dev")
+          }
+        }
+
+        stage('Twistlock Scan') {
+          twistlockScan ca: '', cert: '', compliancePolicy: 'warn', dockerAddress: 'unix:///var/run/docker.sock', gracePeriodDays: 0, ignoreImageBuildTime: true, image: 'uscis-odos/user-${version}', key: '', logLevel: 'true', policy: 'warn', requirePackageUpdate: false, timeout: 3
+        }
+
+        if ( env.BRANCH_NAME == 'develop' ) {
+
+          stage('Integration Tests') {
+
+            String appLabel = "user-$unique_id"
+            String paramAppName = "APP_NAME=user-$unique_id"
+            String paramAppVersion = "APP_VERSION=$version"
+
+            stage('Creating Test Environment') {
+              openshift.withCluster( 'dev' ) {
+                //openshift.verbose()
+                // parse template
+                def models = openshift.process( "dev//uscis-odos-user-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                // create objects
+                def created = openshift.create( models )
+                // deploy container
+                def deployment = openshift.selector( 'dc', [ app: appLabel ] ).deploy()
+                // timer until pod is ready
+                def dcs = created.narrow("dc")
+                timeout(5) {
+                  // Find a least one pod related to the DeploymentConfig and wait it satisfies a condition
+                  dcs.related('pods').untilEach(1) {
+                    return it.object().status.phase != 'Pending'
+                  }
+                }
+
+                // since this app always take a bit to start due to building
+                sleep(120)
+
+                // timer until health app
+                timeout(5) {
+                  while ({
+                      URL url = new URL("http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io");
+                      HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+                      connection.setRequestMethod("GET");
+                      connection.connect();
+                      int code = connection.getResponseCode();
+                      connection.disconnect();
+                      return ( code != 200 );
+                  }()) continue
+                }
+              }
+            }
+
+            stage('Running Zap Tests') {
+              sh """
+              # Cleanup
+              rm -rf \${WORKSPACE}/zap*
+
+              # Start ZAP, specifying a new session in the current workspace, as a background process
+              /opt/zap/zap.sh -daemon -config api.disablekey=true -newsession \${WORKSPACE}/zap -port 9092 &
+
+              # Save ZAP's PID to use later
+              ZAP_PID=\$!
+              echo "\$ZAP_PID";
+
+              # While ZAP is still starting up, sleep one second
+              until netstat -anp | grep 9092 | grep LISTEN
+              do
+                  if [[ \$counter = 30 ]];
+                  then
+                    exit 1;
+                  fi;
+                  echo "sleeping \$counter";
+                  counter=\$((counter+1));
+                  sleep 1s;
+              done
+              echo "done sleeping";
+
+              curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/login
+
+              # While ZAP is still running, download the html report using the ZAP API
+              curl -o zap-report.html http://localhost:9092/OTHER/core/other/htmlreport/?
+
+              # Finally, kill the ZAP process
+              kill \$ZAP_PID
+              """
+
+              publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.', reportFiles: 'zap-report.html', reportName: 'Zap Test Report', reportTitles: 'ODOS Tests'])
+            }
+
+            stage('Tearing Down Test Environment') {
+
+              openshift.withCluster( 'dev' ) {
+                //openshift.verbose()
+
+                  // remove deployment config
+                  openshift.selector('dc', [ app: appLabel ]).delete()
+                  openshift.selector('svc', [ app: appLabel ]).delete()
+                  openshift.selector('route', [ app: appLabel ]).delete()
+                  openshift.selector('is', [ app: appLabel ]).delete()
+              }
+            }
+          }
+        }
       }
-    } catch (err) {
-      //echo "Error encountered: ${err}"
-      throw err
-    }
-  }
-  
-  stage('Twistlock Scan') {
-    try {
-      twistlockScan ca: '', cert: '', compliancePolicy: 'high', dockerAddress: 'unix:///var/run/docker.sock', gracePeriodDays: 0, ignoreImageBuildTime: true, image: "uscis-odos/user:${version}", key: '', logLevel: 'true', policy: 'high', requirePackageUpdate: false, timeout: 10
-    } catch (err) {
-      //echo "Error encountered: ${err}"
-      throw err
-    }
-  }
 
-  stage('Deploy to Dev') {
-    openshift.withCluster( 'dev' ) {
-      //openshift.verbose()
-      try {
-        def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-odos/user:dev --insecure=true --confirm')
-        echo "Result: ${result.out}"
-      } catch ( err ) {
-        //echo "Error encountered: ${err}"
-        throw err
+
+      if ( env.BRANCH_NAME == 'develop' ) {
+        stage('Deploy to Dev') {
+          withEnv(["PATH+OC=${ocDir}"]) {
+            openshift.withCluster( 'dev' ) {
+              //openshift.verbose()
+              def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-odos/user:dev --insecure=true --confirm')
+              echo "Result: ${result.out}"
+            }
+          }
+        }
+      }
+
+    }
+
+    if ( env.BRANCH_NAME == 'master' ) {
+      stage('Deploy to Prod') {
+
+        // pull the image
+        sh "docker pull nexus.uscis-fads.local:9443/uscis-odos/user:dev"
+
+        // tag the freshly pulled image as prod
+        sh "docker tag nexus.uscis-fads.local:9443/uscis-odos/user:dev nexus.uscis-fads.local:9443/uscis-odos/user:prod"
+
+        docker.withRegistry('https://nexus.uscis-fads.local:9443', 'jenkins-nexus-auth') {
+          app_image = docker.image("nexus.uscis-fads.local:9443/uscis-odos/user:prod")
+          app_image.push()
+        }
+
+        withEnv(["PATH+OC=${ocDir}"]) {
+          openshift.withCluster( 'dev' ) {
+            openshift.withProject( 'prod' ) {
+              def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-odos/user:prod --insecure=true --confirm')
+              echo "Result: ${result.out}"
+            }
+          }
+        }
       }
     }
+
+  } catch ( e) {
+    currentBuild.result = 'FAILURE'
+    notifyFailure()
+    println e.getMessage()
+    throw e
   }
+}
 
-  stage('Acceptance Tests') {
-    try {
-
-      // checkout acceptance tests repo to acceptance-tests dir in the current workspace
-      checkout([$class: 'GitSCM', 
-        branches: [[name: '*/develop']], 
-        doGenerateSubmoduleConfigurations: false, 
-        extensions: [[
-          $class: 'RelativeTargetDirectory', 
-          relativeTargetDir: 'acceptance-tests'
-        ]], 
-        submoduleCfg: [], 
-        userRemoteConfigs: [[
-          url: 'git@github.com:REI-Systems/REISystems-USCIS-ODOS2-Testing.git',
-	  credentialsId: 'github-odos-tests'
-	]]
-      ])
-    
-      // run acceptance tests
-      sh "cd acceptance-tests && mvn verify serenity:aggregate -Dtest=ODOSRunner -Ddriver.type=remote -Dremote.driver.url=http://selenium-master.uscis-fads.local:4444/wd/hub -Ddriver.browser=Firefox -Dapplication.url=http://ui-dev.apps.ocp.uscis-fads.reisys.io/login"
-
-    } catch (err) {
-      echo "Error encountered: ${err}"
-      throw err
-    }
-  }
-
+def notifyFailure() {
+    emailext body: '$DEFAULT_CONTENT',
+      recipientProviders: [
+        [$class: 'CulpritsRecipientProvider'],
+        [$class: 'DevelopersRecipientProvider'],
+        [$class: 'RequesterRecipientProvider']
+      ],
+      replyTo: '$DEFAULT_REPLYTO',
+      subject: '$DEFAULT_SUBJECT',
+      to: '$DEFAULT_RECIPIENTS',
+      attachLog: true
 }
