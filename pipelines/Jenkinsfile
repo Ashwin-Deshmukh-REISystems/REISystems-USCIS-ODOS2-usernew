@@ -78,6 +78,7 @@ node (''){
         sh "sourceanalyzer -b ${env.BUILD_ID} -clean"
         sh "sourceanalyzer -b ${env.BUILD_ID} mvn"
         sh "sourceanalyzer -b ${env.BUILD_ID} -scan -f result.fpr"
+        sh "cp -f result.fpr /var/lib/jenkins/workspace/odos/Reservation-Post-Build/result.fpr"
       }
 
       if ( env.BRANCH_NAME == 'develop' ) {
