@@ -171,7 +171,7 @@ public class UserControllerTest {
 		//Valid Access Token
 		when(oktaClientUtil.updateUser(user1)).thenReturn(Boolean.TRUE);
 		when(oktaClientUtil.getUser("1")).thenReturn(user1);
-		when(accessManagementUtil.getUserIdFromToken("abc")).thenReturn("userId");
+		when(accessManagementUtil.getUserIdFromToken("abc")).thenReturn("1");
 		
 		mockMvc.perform(patch("/api/v1/user/1/update").header("X-Auth-Token", "abc")
 				.contentType(MediaType.APPLICATION_JSON)

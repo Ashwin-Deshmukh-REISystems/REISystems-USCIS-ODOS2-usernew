@@ -11,7 +11,7 @@
     <parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.0.RELEASE</version>
+		<version>2.0.4.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<properties>
@@ -21,7 +21,7 @@
         <sonar.sonar.junit.reportPaths>target/surefire-reports</sonar.sonar.junit.reportPaths>
     	<sonar.host.url>https://sonarqube.uscis-fads.reisys.io</sonar.host.url>
     	<sonar.login>524f12253affbb1d8b97ce32af6c4fac132bd711</sonar.login>
-    	<sonar.exclusions>src/main/java/io/reisys/uscis/odos/user/api/config/*,src/main/java/io/reisys/uscis/odos/user/api/util/*,src/main/java/io/reisys/uscis/odos/user/api/ApiApplication*</sonar.exclusions>
+    	<sonar.exclusions>src/main/java/io/reisys/uscis/odos/user/api/config/*,src/main/java/io/reisys/uscis/odos/user/api/util/*,src/main/java/io/reisys/uscis/odos/user/api/ApiApplication*, src/main/java/io/reisys/uscis/odos/user/api/model/*</sonar.exclusions>
 	</properties>
 
 	<dependencies>
@@ -125,6 +125,7 @@
                         <exclude>**/*ApiApplication*</exclude>
                         <exclude>**/config/*</exclude>
                         <exclude>**/util/*</exclude>
+                        <exclude>**/model/*</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -136,7 +137,7 @@
                     </execution>
                     <execution>
                         <id>default-report</id>
-                        <phase>prepare-package</phase>
+                        <phase>test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>

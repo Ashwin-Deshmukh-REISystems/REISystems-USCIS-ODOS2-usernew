@@ -1,6 +1,7 @@
 package io.reisys.uscis.odos.user.api.model;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.hateoas.ResourceSupport;
 
@@ -72,5 +73,21 @@ public class User  extends ResourceSupport {
 	public void setErrorMessages(List<String> errorMessages) {
 		this.errorMessages = errorMessages;
 	}
+	
+	@Override
+    public boolean equals(Object o) {
+
+        if (o == this) return true;
+        if (!(o instanceof User)) {
+            return false;
+        }
+        User user = (User) o;
+        return Objects.equals(userId, user.userId);
+    }
+	
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId);
+    }
 
 }
