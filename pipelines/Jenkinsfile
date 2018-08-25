@@ -128,7 +128,7 @@ node (''){
                 // timer until health app
                 timeout(5) {
                   while ({
-                      URL url = new URL("http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io");
+                      URL url = new URL("http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health");
                       HttpURLConnection connection = (HttpURLConnection)url.openConnection();
                       connection.setRequestMethod("GET");
                       connection.connect();
