@@ -1,7 +1,9 @@
 package io.reisys.uscis.odos.user.api.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +29,12 @@ public class OktaClientUtil {
     
     public List<User> getAllActiveUsers() {
     	List<User> userList = new ArrayList<User>();
-    	userList.addAll(getAllActiveUsersForGroup("Requestor"));
-    	userList.addAll(getAllActiveUsersForGroup("Administrator"));
-    	userList.addAll(getAllActiveUsersForGroup("Reservation Manager"));
+    	Set<User> userSet = new HashSet<User>();
+    	userSet.addAll(getAllActiveUsersForGroup("Requestor"));
+    	userSet.addAll(getAllActiveUsersForGroup("Administrator"));
+    	userSet.addAll(getAllActiveUsersForGroup("Reservation Manager"));
     	
+    	userList.addAll(userSet);
     	LOGGER.info("Total Count of Active Users {}", userList.size());
     	return userList;
     }
