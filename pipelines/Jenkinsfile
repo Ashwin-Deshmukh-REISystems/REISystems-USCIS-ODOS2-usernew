@@ -108,7 +108,7 @@ node (''){
               openshift.withCluster( 'dev' ) {
                 //openshift.verbose()
                 // parse template
-                def models = openshift.process( "dev//uscis-odos-user-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                def models = openshift.process( "dev//uscis-odos-user-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
                 // create objects
                 def created = openshift.create( models )
                 // deploy container
