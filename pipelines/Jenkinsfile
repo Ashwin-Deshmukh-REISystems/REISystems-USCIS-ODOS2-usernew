@@ -165,7 +165,7 @@ node (''){
               done
               echo "done sleeping";
 
-              curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io
+              curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health
 
               # While ZAP is still running, download the html report using the ZAP API
               curl -o zap-report.html http://localhost:9092/OTHER/core/other/htmlreport/?
