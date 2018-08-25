@@ -81,7 +81,7 @@ node (''){
         sh "cp -f result.fpr /var/lib/jenkins/workspace/odos/Reservation-Post-Build/result.fpr"
       }
 
-      if ( env.BRANCH_NAME == 'develop' ) {
+      if ( env.BRANCH_NAME != 'master' ) {
 
         stage('Build Docker Image') {
 
