@@ -193,7 +193,7 @@ public class UserController {
         }
     }
     
-    @RequestMapping(value = "/{userId}/activate", method = RequestMethod.DELETE, produces = MediaTypes.HAL_JSON_VALUE)
+    @RequestMapping(value = "/{userId}/activate", method = RequestMethod.GET, produces = MediaTypes.HAL_JSON_VALUE)
     @ApiOperation(value = "Activate User Information")
     @ApiResponses(value = {
 	         @ApiResponse(code = 404, message = "Service not found"),
