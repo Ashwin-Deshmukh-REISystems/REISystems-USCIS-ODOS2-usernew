@@ -78,9 +78,10 @@ node (''){
         sh "sourceanalyzer -b ${env.BUILD_ID} -clean"
         sh "sourceanalyzer -b ${env.BUILD_ID} mvn"
         sh "sourceanalyzer -b ${env.BUILD_ID} -scan -f result.fpr"
+        sh "cp -f result.fpr /var/lib/jenkins/workspace/odos/Reservation-Post-Build/result.fpr"
       }
 
-      if ( env.BRANCH_NAME == 'develop' ) {
+      if ( env.BRANCH_NAME != 'master' ) {
 
         stage('Build Docker Image') {
 
@@ -128,7 +129,7 @@ node (''){
                 // timer until health app
                 timeout(5) {
                   while ({
-                      URL url = new URL("http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io");
+                      URL url = new URL("http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health");
                       HttpURLConnection connection = (HttpURLConnection)url.openConnection();
                       connection.setRequestMethod("GET");
                       connection.connect();
@@ -165,7 +166,7 @@ node (''){
               done
               echo "done sleeping";
 
-              curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io
+              curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health
 
               # While ZAP is still running, download the html report using the ZAP API
               curl -o zap-report.html http://localhost:9092/OTHER/core/other/htmlreport/?
