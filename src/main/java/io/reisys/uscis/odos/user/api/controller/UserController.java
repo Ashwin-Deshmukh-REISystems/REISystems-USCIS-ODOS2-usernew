@@ -111,6 +111,27 @@ public class UserController {
         
     }
     
+    @RequestMapping(value = "/getUserWithoutToken/{userId}", method = RequestMethod.GET, produces = MediaTypes.HAL_JSON_VALUE)
+    @ApiOperation(value = "Get User Information without Token access Check")
+    @ApiResponses(value = {
+	         @ApiResponse(code = 404, message = "Service not found"),
+	        @ApiResponse(code = 200, message = "Successful retrieval",
+	            response = User.class) })      
+    public ResponseEntity<User> getUserWithoutTokenCheck(
+    		@ApiParam(value = "The id of the user being retrieved", required = true) @PathVariable("userId") String userId) {
+    	LOGGER.info("Retrieving User with id without Token Check{}", userId);
+    	
+    	User user = oktaClientUtil.getUser(userId);
+    	if (user != null) {
+    		LOGGER.info("User exists ");
+    		assembleLinks(user);
+        	return ResponseEntity.ok().body(user);
+    	} else {
+    		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    	}
+        
+    }
+    
     @RequestMapping(value = "/create", method = RequestMethod.POST, produces = MediaTypes.HAL_JSON_VALUE)
     @ApiOperation(value = "Create User Information")
     @ApiResponses(value = {
@@ -220,5 +241,9 @@ public class UserController {
     
     protected void assembleLinks(String accessToken, User user) {
     	user.add(linkTo(methodOn(UserController.class).getUser(accessToken, user.getUserId())).withSelfRel());
+    }
+    
+    protected void assembleLinks(User user) {
+    	user.add(linkTo(methodOn(UserController.class).getUserWithoutTokenCheck(user.getUserId())).withSelfRel());
     }
 }
