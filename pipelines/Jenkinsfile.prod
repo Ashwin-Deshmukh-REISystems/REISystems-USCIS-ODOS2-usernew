@@ -1,0 +1,45 @@
+// version var for entire scope
+def version = ''
+
+properties([
+   parameters([
+      string(name: 'VERSION', defaultValue: 'dev', description: 'The version to promote' )
+   ])
+])
+
+// Run on docker nodes
+node (''){
+
+  currentBuild.result = "SUCCESS"
+
+  def ocDir = tool "oc-3.6.1"
+
+  stage('Deploy to Prod') {
+
+     // pull the image
+     sh "docker pull nexus.uscis-fads.local:9443/uscis-odos/user:${params.VERSION}"  // todo, have an actual version to pull, ex 0.0.1-unstable23
+
+     // tag the freshly pulled image as prod
+     sh "docker tag nexus.uscis-fads.local:9443/uscis-odos/user:${params.VERSION} nexus.uscis-fads.local:9443/uscis-odos/user:prod"
+
+     docker.withRegistry('https://nexus.uscis-fads.local:9443', 'jenkins-nexus-auth') {
+        app_image = docker.image("nexus.uscis-fads.local:9443/uscis-odos/user:prod")
+        app_image.push()
+    }
+
+    withEnv(["PATH+OC=${ocDir}"]) {
+      openshift.withCluster( 'dev' ) {
+        openshift.withProject( 'prod' ) {
+          //openshift.verbose()
+          try {
+            def result = openshift.raw('import-image nexus.uscis-fads.local:9443/uscis-odos/user:prod --insecure=true --confirm')
+            echo "Result: ${result.out}"
+          } catch ( e ) {
+            echo "Error encountered: ${e}"
+          }
+        }
+      }
+    }
+  }
+
+}

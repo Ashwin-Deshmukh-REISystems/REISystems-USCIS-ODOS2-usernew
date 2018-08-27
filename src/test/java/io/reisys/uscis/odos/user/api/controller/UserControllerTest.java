@@ -83,6 +83,30 @@ public class UserControllerTest {
 	}
 	
 	@Test
+	public void testGetUserWithoutTokenCheck() throws Exception {
+		User user1 = UserTestUtility.createUser("1", "FirstName1", "LastName1", "FirstName1.LastName1@test.com");
+		User user2 = UserTestUtility.createUser("2", "FirstName2", "LastName2", "FirstName2.LastName2@test.com");
+		when(oktaClientUtil.getUser("1")).thenReturn(user1);
+		when(oktaClientUtil.getUser("2")).thenReturn(user2);
+		
+		mockMvc.perform(get("/api/v1/user/getUserWithoutToken/1"))
+			.andExpect(status().isOk())
+			.andExpect(content().contentType("application/hal+json;charset=UTF-8"))
+			.andExpect(jsonPath("$.userId", is(user1.getUserId())))
+			.andExpect(jsonPath("$.firstName", is(user1.getFirstName())))
+			.andExpect(jsonPath("$.lastName", is(user1.getLastName())))
+			.andExpect(jsonPath("$.email", is(user1.getEmail())))
+			.andExpect(jsonPath("$.status", is(user1.getStatus())));
+		
+		Mockito.verify(oktaClientUtil, times(1)).getUser("1");
+		
+		//When No Active Users exist
+		when(oktaClientUtil.getUser("1")).thenReturn(null);
+		mockMvc.perform(get("/api/v1/getUserWithoutToken/1"))
+			.andExpect(status().isNotFound());
+	}
+	
+	@Test
 	public void testGetUserForUserId() throws Exception {
 		//Invalid Access Token
 		when(accessManagementUtil.getUserIdFromToken("abc")).thenReturn(null);
@@ -218,21 +242,21 @@ public class UserControllerTest {
 	public void testActivateUser() throws Exception {
 		//Invalid Access Token
 		when(accessManagementUtil.getUserIdFromToken("abc")).thenReturn(null);
-		mockMvc.perform(delete("/api/v1/user/1/activate").header("X-Auth-Token", "abc"))
+		mockMvc.perform(get("/api/v1/user/1/activate").header("X-Auth-Token", "abc"))
 			.andExpect(status().isUnauthorized());
 		
 		//Valid Access Token
 		when(oktaClientUtil.activateUser("1")).thenReturn(Boolean.TRUE);
 		when(accessManagementUtil.getUserIdFromToken("abc")).thenReturn("userId");
-		mockMvc.perform(delete("/api/v1/user/1/activate").header("X-Auth-Token", "abc"))
+		mockMvc.perform(get("/api/v1/user/1/activate").header("X-Auth-Token", "abc"))
 			.andExpect(status().isOk());
 		
 		Mockito.verify(oktaClientUtil, times(1)).activateUser("1");
 		
-		//When Delete was not successful
+		//When Activate was not successful
 		when(oktaClientUtil.activateUser("2")).thenReturn(Boolean.FALSE);
 		
-		mockMvc.perform(delete("/api/v1/user/2/activate").header("X-Auth-Token", "abc"))
+		mockMvc.perform(get("/api/v1/user/2/activate").header("X-Auth-Token", "abc"))
 			.andExpect(status().isNotFound());
 		
 		Mockito.verify(oktaClientUtil, times(1)).activateUser("2");
