@@ -37,7 +37,7 @@ public class AccessManagementUtil {
 	     
 	    UriComponentsBuilder authorizationUriBuilder = UriComponentsBuilder.fromHttpUrl(authorizationEndPoint);
 	    
-	    LOGGER.info("Authorization Call URI is20 {}", authorizationUriBuilder.build().encode().toUri());
+	    LOGGER.info("Authorization Call URI is21 {}", authorizationUriBuilder.build().encode().toUri());
 	    
 	    RestTemplate restTemplate = new RestTemplate();
 	    ResponseEntity<String> result = restTemplate.postForEntity(authorizationUriBuilder.build().encode().toUri(), requestEntity, String.class );
