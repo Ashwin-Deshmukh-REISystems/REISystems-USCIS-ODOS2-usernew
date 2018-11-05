@@ -16,6 +16,7 @@ node ('') {
 node (''){
 
   try {
+    echo 'THIS JENKINS IS FROM DEVELOP UserNew BRANCH...'
     def ocDir = tool "oc-3.6.1"
     def app_image
 
