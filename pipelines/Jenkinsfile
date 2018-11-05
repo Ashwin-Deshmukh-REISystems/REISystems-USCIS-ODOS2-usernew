@@ -17,7 +17,9 @@ node (''){
 
   try {
     echo 'THIS JENKINS IS FROM DEVELOP UserNew BRANCH...'
-    def ocDir = tool "oc-3.6.1"
+    def ocDir //= tool "oc-3.6.1"
+    def mavenPath = tool 'M3'
+    echo mavenPath
     def app_image
 
     stage('Initialize') {
