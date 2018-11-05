@@ -16,21 +16,24 @@ node ('') {
 node (''){
 
   try {
-    echo 'THIS JENKINS IS FROM DEVELOP UserNew BRANCH...'
+    echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH...###'
     def ocDir //= tool "oc-3.6.1"
     def mavenPath = tool 'M3'
-    echo mavenPath
+    echo '### ' + mavenPath
     def app_image
 
     stage('Initialize') {
-      echo 'Initializing...'
+      echo '###Initializing...###'
       env.PATH = "${tool 'M3'}/bin:${env.PATH}"
-      env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
+      echo '### Maven path ' + "${tool 'M3'}/bin:${env.PATH}" + ' ###'
+      //env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
     }
 
     stage('Checkout') {
+      echo '###before checkout...###'
       checkout scm
-
+      echo '###after checkout...###'
+      echo 'branch name -> ' + env.BRANCH_NAME
       if ( env.BRANCH_NAME == 'develop' ) {
           version = "0.0.1-dev"
       } else if ( env.BRANCH_NAME == 'master' ) {
