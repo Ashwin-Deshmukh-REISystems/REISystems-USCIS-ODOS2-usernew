@@ -16,19 +16,34 @@ node ('') {
 node (''){
 
   try {
-    echo 'THIS JENKINS IS FROM MASTER UserNew BRANCH...'
-    def ocDir = tool "oc-3.6.1"
+    echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH test9...###'
+    //echo "### reply to -> $DEFAULT_REPLYTO ###"
+    //echo "### subject -> $DEFAULT_SUBJECT ###"
+    //echo "### recipients -> $DEFAULT_RECIPIENTS ###"
+    //echo "### content -> $DEFAULT_CONTENT ###"
+    def ocDir //= tool "oc-3.6.1"
+    def mavenPath = tool 'M3'
+    echo '### ' + mavenPath
     def app_image
 
     stage('Initialize') {
-      echo 'Initializing...'
+      echo '###Initializing...###'
       env.PATH = "${tool 'M3'}/bin:${env.PATH}"
-      env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
+      echo '### Maven path ' + "${tool 'M3'}/bin:${env.PATH}" + ' ###'
+      //env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
     }
 
     stage('Checkout') {
-      checkout scm
-
+      echo '###before checkout...###'
+      //checkout scm
+      //checkout([$class: 'GitSCM', branches: [[name: '*/develop']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'PreBuildMerge', options: [mergeRemote: 'origin', mergeTarget: 'master']]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/Ashwin-Deshmukh-REISystems/REISystems-USCIS-ODOS2-usernew.git']]])
+      
+      sh 'git checkout master'
+      sh 'git merge origin/develop'
+      
+      echo '###after checkout...###'
+      
+      echo 'branch name -> ' + env.BRANCH_NAME
       if ( env.BRANCH_NAME == 'develop' ) {
           version = "0.0.1-dev"
       } else if ( env.BRANCH_NAME == 'master' ) {
@@ -41,6 +56,7 @@ node (''){
       env.VERSION=version
       currentBuild.displayName = version
       unique_id = "${env.BUILD_NUMBER}"
+      echo '### ' + unique_id + ' ###'
     }
 
     if ( env.BRANCH_NAME.startsWith('PR-') ) {
@@ -72,7 +88,8 @@ node (''){
             }
         }
       }
-
+      
+      /*
       stage('Fortify Security Code Analysis') {
         sh "mkdir -p sca-maven-plugin && tar -xvzf /opt/HPE_Security/Fortify_SCA_and_Apps_17.20/plugins/maven/maven-plugin-bin.tar.gz -C sca-maven-plugin"
         sh "cd sca-maven-plugin && mvn install:install-file -Dfile=pom.xml -DpomFile=pom.xml && mvn install:install-file -Dfile=xcodebuild/pom.xml -DpomFile=xcodebuild/pom.xml && mvn install:install-file -Dfile=sca-maven-plugin/sca-maven-plugin-17.20.jar -DpomFile=sca-maven-plugin/pom.xml"
@@ -81,8 +98,8 @@ node (''){
         sh "sourceanalyzer -b ${env.BUILD_ID} -scan -f result.fpr"
         sh "cp -f result.fpr /var/lib/jenkins/workspace/odos/Reservation-Post-Build/result.fpr"
       }
-
-      if ( env.BRANCH_NAME != 'master' ) {
+      */
+      /*if ( env.BRANCH_NAME != 'master' ) {
 
         stage('Build Docker Image') {
 
@@ -146,14 +163,11 @@ node (''){
               sh """
               # Cleanup
               rm -rf \${WORKSPACE}/zap*
-
               # Start ZAP, specifying a new session in the current workspace, as a background process
               /opt/zap/zap.sh -daemon -config api.disablekey=true -newsession \${WORKSPACE}/zap -port 9092 &
-
               # Save ZAP's PID to use later
               ZAP_PID=\$!
               echo "\$ZAP_PID";
-
               # While ZAP is still starting up, sleep one second
               until netstat -anp | grep 9092 | grep LISTEN
               do
@@ -166,12 +180,9 @@ node (''){
                   sleep 1s;
               done
               echo "done sleeping";
-
               curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health
-
               # While ZAP is still running, download the html report using the ZAP API
               curl -o zap-report.html http://localhost:9092/OTHER/core/other/htmlreport/?
-
               # Finally, kill the ZAP process
               kill \$ZAP_PID
               """
@@ -193,10 +204,10 @@ node (''){
             }
           }
         }
-      }
+      }*/
 
 
-      if ( env.BRANCH_NAME == 'develop' ) {
+      /*if ( env.BRANCH_NAME == 'develop' ) {
         stage('Deploy to Dev') {
           withEnv(["PATH+OC=${ocDir}"]) {
             openshift.withCluster( 'dev' ) {
@@ -206,11 +217,11 @@ node (''){
             }
           }
         }
-      }
+      }*/
 
     }
 
-    if ( env.BRANCH_NAME == 'master' ) {
+    /*if ( env.BRANCH_NAME == 'master' ) {
       stage('Deploy to Prod') {
 
         // pull the image
@@ -233,7 +244,7 @@ node (''){
           }
         }
       }
-    }
+    }*/
 
   } catch ( e) {
     currentBuild.result = 'FAILURE'
