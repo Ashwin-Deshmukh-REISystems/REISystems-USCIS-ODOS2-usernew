@@ -35,11 +35,11 @@ node (''){
 
     stage('Checkout') {
       echo '###before checkout...###'
-      //checkout scm
+      checkout scm
       //checkout([$class: 'GitSCM', branches: [[name: '*/develop']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'PreBuildMerge', options: [mergeRemote: 'origin', mergeTarget: 'master']]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/Ashwin-Deshmukh-REISystems/REISystems-USCIS-ODOS2-usernew.git']]])
       
-      sh 'git checkout master'
-      sh 'git merge origin/develop'
+      //sh 'git checkout master'
+      //sh 'git merge origin/develop'
       
       echo '###after checkout...###'
       
