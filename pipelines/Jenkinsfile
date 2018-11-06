@@ -16,7 +16,7 @@ node ('') {
 node (''){
 
   try {
-    echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH test1...###'
+    echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH test2...###'
     //echo "### reply to -> $DEFAULT_REPLYTO ###"
     //echo "### subject -> $DEFAULT_SUBJECT ###"
     //echo "### recipients -> $DEFAULT_RECIPIENTS ###"
