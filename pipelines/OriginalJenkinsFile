@@ -16,7 +16,6 @@ node ('') {
 node (''){
 
   try {
-    echo 'THIS JENKINS IS FROM MASTER UserNew BRANCH...'
     def ocDir = tool "oc-3.6.1"
     def app_image
 
@@ -146,14 +145,11 @@ node (''){
               sh """
               # Cleanup
               rm -rf \${WORKSPACE}/zap*
-
               # Start ZAP, specifying a new session in the current workspace, as a background process
               /opt/zap/zap.sh -daemon -config api.disablekey=true -newsession \${WORKSPACE}/zap -port 9092 &
-
               # Save ZAP's PID to use later
               ZAP_PID=\$!
               echo "\$ZAP_PID";
-
               # While ZAP is still starting up, sleep one second
               until netstat -anp | grep 9092 | grep LISTEN
               do
@@ -166,12 +162,9 @@ node (''){
                   sleep 1s;
               done
               echo "done sleeping";
-
               curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health
-
               # While ZAP is still running, download the html report using the ZAP API
               curl -o zap-report.html http://localhost:9092/OTHER/core/other/htmlreport/?
-
               # Finally, kill the ZAP process
               kill \$ZAP_PID
               """
