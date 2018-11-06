@@ -19,8 +19,8 @@ node (''){
     echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH...###'
     //echo "### reply to -> $DEFAULT_REPLYTO ###"
     //echo "### subject -> $DEFAULT_SUBJECT ###"
-    echo "### recipients -> $DEFAULT_RECIPIENTS ###"
-    echo "### content -> $DEFAULT_CONTENT ###"
+    //echo "### recipients -> $DEFAULT_RECIPIENTS ###"
+    //echo "### content -> $DEFAULT_CONTENT ###"
     def ocDir //= tool "oc-3.6.1"
     def mavenPath = tool 'M3'
     echo '### ' + mavenPath
