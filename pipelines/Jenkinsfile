@@ -16,7 +16,7 @@ node ('') {
 node (''){
 
   try {
-    echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH test8...###'
+    echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH test9...###'
     //echo "### reply to -> $DEFAULT_REPLYTO ###"
     //echo "### subject -> $DEFAULT_SUBJECT ###"
     //echo "### recipients -> $DEFAULT_RECIPIENTS ###"
@@ -39,7 +39,7 @@ node (''){
       //checkout([$class: 'GitSCM', branches: [[name: '*/develop']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'PreBuildMerge', options: [mergeRemote: 'origin', mergeTarget: 'master']]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/Ashwin-Deshmukh-REISystems/REISystems-USCIS-ODOS2-usernew.git']]])
       
       sh 'git checkout master'
-      sh 'git merge develop'
+      sh 'git merge origin/develop'
       
       echo '###after checkout...###'
       
