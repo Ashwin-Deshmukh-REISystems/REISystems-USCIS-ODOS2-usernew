@@ -17,6 +17,10 @@ node (''){
 
   try {
     echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH...###'
+    echo "### reply to -> $DEFAULT_REPLYTO ###"
+    echo "### subject -> $DEFAULT_SUBJECT ###"
+    echo "### recipients -> $DEFAULT_RECIPIENTS ###"
+    echo "### content -> $DEFAULT_CONTENT ###"
     def ocDir //= tool "oc-3.6.1"
     def mavenPath = tool 'M3'
     echo '### ' + mavenPath
@@ -89,7 +93,7 @@ node (''){
         sh "cp -f result.fpr /var/lib/jenkins/workspace/odos/Reservation-Post-Build/result.fpr"
       }
       */
-      if ( env.BRANCH_NAME != 'master' ) {
+      /*if ( env.BRANCH_NAME != 'master' ) {
 
         stage('Build Docker Image') {
 
@@ -153,14 +157,11 @@ node (''){
               sh """
               # Cleanup
               rm -rf \${WORKSPACE}/zap*
-
               # Start ZAP, specifying a new session in the current workspace, as a background process
               /opt/zap/zap.sh -daemon -config api.disablekey=true -newsession \${WORKSPACE}/zap -port 9092 &
-
               # Save ZAP's PID to use later
               ZAP_PID=\$!
               echo "\$ZAP_PID";
-
               # While ZAP is still starting up, sleep one second
               until netstat -anp | grep 9092 | grep LISTEN
               do
@@ -173,12 +174,9 @@ node (''){
                   sleep 1s;
               done
               echo "done sleeping";
-
               curl -k -x localhost:9092 http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health
-
               # While ZAP is still running, download the html report using the ZAP API
               curl -o zap-report.html http://localhost:9092/OTHER/core/other/htmlreport/?
-
               # Finally, kill the ZAP process
               kill \$ZAP_PID
               """
@@ -200,10 +198,10 @@ node (''){
             }
           }
         }
-      }
+      }*/
 
 
-      if ( env.BRANCH_NAME == 'develop' ) {
+      /*if ( env.BRANCH_NAME == 'develop' ) {
         stage('Deploy to Dev') {
           withEnv(["PATH+OC=${ocDir}"]) {
             openshift.withCluster( 'dev' ) {
@@ -213,11 +211,11 @@ node (''){
             }
           }
         }
-      }
+      }*/
 
     }
 
-    if ( env.BRANCH_NAME == 'master' ) {
+    /*if ( env.BRANCH_NAME == 'master' ) {
       stage('Deploy to Prod') {
 
         // pull the image
@@ -240,7 +238,7 @@ node (''){
           }
         }
       }
-    }
+    }*/
 
   } catch ( e) {
     currentBuild.result = 'FAILURE'
