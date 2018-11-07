@@ -89,6 +89,14 @@ node (''){
         }
       }
       
+      stage('Creating Test Environment') {
+                echo '### before cluster ###'
+              openshift.withCluster( 'deploycluster' ) {
+                echo '### after cluster ###'  
+                openshift.verbose()
+              }
+      }
+      
       /*
       stage('Fortify Security Code Analysis') {
         sh "mkdir -p sca-maven-plugin && tar -xvzf /opt/HPE_Security/Fortify_SCA_and_Apps_17.20/plugins/maven/maven-plugin-bin.tar.gz -C sca-maven-plugin"
