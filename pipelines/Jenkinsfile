@@ -105,16 +105,21 @@ node (''){
             String appLabel = "user-$unique_id"
             String paramAppName = "APP_NAME=user-$unique_id"
             String paramAppVersion = "APP_VERSION=$version"
-
+            echo "### " + "user-$unique_id" + " " + "APP_NAME=user-$unique_id" + " " + "APP_VERSION=$version" + " ###"
             stage('Creating Test Environment') {
               openshift.withCluster( 'deploycluster' ) {
-                //openshift.verbose()
+                echo '### in cluster ###'
+                openshift.verbose()
                 // parse template
+                echo '### before process ###'
                 def models = openshift.process( "dev//sample-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                echo '### after process ###'
                 // create objects
                 def created = openshift.create( models )
+                echo '### after create ###'
                 // deploy container
                 def deployment = openshift.selector( 'dc', [ app: appLabel ] ).deploy()
+                echo '### after selector ###'
                 // timer until pod is ready
                 def dcs = created.narrow("dc")
                 timeout(5) {
