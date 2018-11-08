@@ -100,6 +100,48 @@ node (''){
           }
         }
       
+      stage('Integration Tests') {
+
+            String appLabel = "user-$unique_id"
+            String paramAppName = "APP_NAME=user-$unique_id"
+            String paramAppVersion = "APP_VERSION=$version"
+
+            stage('Creating Test Environment') {
+              openshift.withCluster( 'deploycluster' ) {
+                //openshift.verbose()
+                // parse template
+                def models = openshift.process( "dev//uscis-odos-user-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                // create objects
+                def created = openshift.create( models )
+                // deploy container
+                def deployment = openshift.selector( 'dc', [ app: appLabel ] ).deploy()
+                // timer until pod is ready
+                def dcs = created.narrow("dc")
+                timeout(5) {
+                  // Find a least one pod related to the DeploymentConfig and wait it satisfies a condition
+                  dcs.related('pods').untilEach(1) {
+                    return it.object().status.phase != 'Pending'
+                  }
+                }
+
+                // since this app always take a bit to start due to building
+                sleep(120)
+
+                // timer until health app
+                timeout(5) {
+                  while ({
+                      URL url = new URL("http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health");
+                      HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+                      connection.setRequestMethod("GET");
+                      connection.connect();
+                      int code = connection.getResponseCode();
+                      connection.disconnect();
+                      return ( code != 200 );
+                  }()) continue
+                }
+              }
+            }
+      }
       /*
       stage('Creating Test Environment') {
                 echo '### before cluster ###'
