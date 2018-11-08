@@ -112,7 +112,7 @@ node (''){
                 openshift.verbose()
                 // parse template
                 echo '### before process ###'
-                def models = openshift.process( "dev//sample-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                def models = openshift.process( "sample-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
                 echo '### after process ###'
                 // create objects
                 def created = openshift.create( models )
