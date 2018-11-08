@@ -93,7 +93,7 @@ node (''){
         echo '### before build docker ###'
           app_image = docker.build("testashwin/usernew")
         echo '### after build docker ###'
-          docker.withRegistry('http://nexus-cicd-developer.apps.52.55.203.187.nip.io','jenkins-nexus-authentication') {
+          docker.withRegistry('https://nexus.reisystems.io/','jenkins-nexus-authentication') {
             echo '### docker with registry ###'
             app_image.push(version)
             app_image.push("dev")
