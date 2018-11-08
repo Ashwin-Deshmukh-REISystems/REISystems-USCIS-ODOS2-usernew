@@ -116,8 +116,8 @@ node (''){
                 echo '### before process ###'
                 def templatePath = 'https://raw.githubusercontent.com/Ashwin-Deshmukh-REISystems/REISystems-USCIS-ODOS2-usernew/develop/openshift/deploy-ci-template.yaml' 
                 def templateName = 'deploy-ci-template' 
-                openshift.selector("all", [ template : templateName ]).delete()
-                  echo '### after delete ###'
+                //openshift.selector("all", [ template : templateName ]).delete()
+                //  echo '### after delete ###'
                 openshift.newApp(templatePath)
                   echo '### after newapp ###'
                   def models = openshift.process( templateName, "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
