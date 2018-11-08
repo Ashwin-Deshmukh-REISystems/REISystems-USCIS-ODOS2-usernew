@@ -107,7 +107,7 @@ node (''){
             String paramAppVersion = "APP_VERSION=$version"
             echo "### " + "user-$unique_id" + " " + "APP_NAME=user-$unique_id" + " " + "APP_VERSION=$version" + " ###"
             stage('Creating Test Environment') {
-              openshift.withCluster( 'deploycluster' ) {
+              openshift.withCluster( 'https://console.52.55.203.187.nip.io:8443','openshift-authentication' ) {
                 echo '### in cluster ###'
                 openshift.verbose()
                 // parse template
