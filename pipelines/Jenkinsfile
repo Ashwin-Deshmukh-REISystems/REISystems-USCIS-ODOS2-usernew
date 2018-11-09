@@ -116,7 +116,7 @@ node (''){
                 //  echo '### after delete ###'
                 //openshift.newApp(templatePath)
                   echo '### after newapp ###'
-                  def models = openshift.process("version")
+                  def ocVersion = openshift.process("version")
                   def models = openshift.process("-f", templatePath, "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
                 echo '### after process ###'
                 // create objects
