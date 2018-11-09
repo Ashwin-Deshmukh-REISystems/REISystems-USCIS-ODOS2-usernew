@@ -17,10 +17,6 @@ node (''){
 
   try {
     echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH test9...###'
-    //echo "### reply to -> $DEFAULT_REPLYTO ###"
-    //echo "### subject -> $DEFAULT_SUBJECT ###"
-    //echo "### recipients -> $DEFAULT_RECIPIENTS ###"
-    //echo "### content -> $DEFAULT_CONTENT ###"
     def ocDir //= tool "oc-3.6.1"
     def mavenPath = tool 'M3'
     echo '### ' + mavenPath
@@ -110,7 +106,7 @@ node (''){
               //openshift.withCluster( 'https://console.52.55.203.187.nip.io:8443','openshift-authentication' ) {
               openshift.withCluster('deploycluster'){
                 openshift.withCredentials('openshift-authentication'){
-              echo '### in cluster ###'
+                echo '### in cluster ###'
                 openshift.verbose()
                 // parse template
                 echo '### before process ###'
@@ -118,9 +114,9 @@ node (''){
                 def templateName = 'deploy-ci-template' 
                 //openshift.selector("all", [ template : templateName ]).delete()
                 //  echo '### after delete ###'
-                openshift.newApp(templatePath)
+                //openshift.newApp(templatePath)
                   echo '### after newapp ###'
-                  def models = openshift.process( templateName, "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                  def models = openshift.process("-f", templatePath, "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
                 echo '### after process ###'
                 // create objects
                 def created = openshift.create( models )
