@@ -105,6 +105,11 @@ node (''){
             stage('Creating Test Environment') {
               //openshift.withCluster( 'https://console.52.55.203.187.nip.io:8443','openshift-authentication' ) {
               openshift.withCluster('deploycluster'){
+                echo '### before login ###'
+                openshift.raw("login","-u","admin","-p","1212")
+                echo '### after login ###'
+                openshift.raw("whoami")
+                echo '### after whoami ###'
                 openshift.withCredentials('openshift-authentication'){
                 echo '### in cluster ###'
                 openshift.verbose()
