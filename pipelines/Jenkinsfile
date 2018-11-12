@@ -17,7 +17,7 @@ node (''){
 
   try {
     echo '###THIS JENKINS IS FROM DEVELOP UserNew BRANCH test9...###'
-    def ocDir //= tool "oc-3.6.1"
+    def ocDir = tool "oc-3.6.1"
     def mavenPath = tool 'M3'
     echo '### ' + mavenPath
     def app_image
@@ -26,7 +26,7 @@ node (''){
       echo '###Initializing...###'
       env.PATH = "${tool 'M3'}/bin:${env.PATH}"
       echo '### Maven path ' + "${tool 'M3'}/bin:${env.PATH}" + ' ###'
-      //env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
+      env.PATH = "${tool 'oc-3.6.1'}:${env.PATH}"
     }
 
     stage('Checkout') {
@@ -84,7 +84,7 @@ node (''){
             }
         }
       }
-      /*
+      
       stage('Build Docker Image') {
         echo '### before build docker ###'
           app_image = docker.build("testashwin/usernew")
@@ -95,7 +95,8 @@ node (''){
             app_image.push("dev")
           }
         }
-      */
+      
+      
       stage('Integration Tests') {
 
             String appLabel = "user-$unique_id"
@@ -126,28 +127,40 @@ node (''){
                   //def models = openshift.process("-f", templatePath, "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
                  // parse template
                 
-                def models = openshift.process( "cicd//uscis-odos-user-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
-                echo '### after process ###'
-                // create objects
-                def created = openshift.create( models )
-                echo '### after create ###'
-                // deploy container
-                def deployment = openshift.selector( 'dc', [ app: appLabel ] ).deploy()
-                echo '### after selector ###'
-                // timer until pod is ready
-                def dcs = created.narrow("dc")
-                timeout(5) {
-                  // Find a least one pod related to the DeploymentConfig and wait it satisfies a condition
-                  dcs.related('pods').untilEach(1) {
-                    return it.object().status.phase != 'Pending'
+                  stage('Deploy to Dev') {
+                    //withEnv(["PATH+OC=${ocDir}"]) {
+                      openshift.withCluster( 'deploycluster' ) {
+                        //openshift.verbose()
+                        def result = openshift.raw('import-image nexus.reisystems.io/testashwin/usernew:dev --insecure=true --confirm')
+                        echo "Result: ${result.out}"
+                      }
+                    //}
                   }
-                }
-
+                
+                
+                //def models = openshift.process( "cicd//uscis-odos-user-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                //echo '### after process ###'
+                // create objects
+                //def created = openshift.create( models )
+                //echo '### after create ###'
+                // deploy container
+                //def deployment = openshift.selector( 'dc', [ app: appLabel ] ).deploy()
+                //echo '### after selector ###'
+                // timer until pod is ready
+                //def dcs = created.narrow("dc")
+                //timeout(5) {
+                //  // Find a least one pod related to the DeploymentConfig and wait it satisfies a condition
+                //  dcs.related('pods').untilEach(1) {
+                //    return it.object().status.phase != 'Pending'
+                //  }
+                //}
+                /*
                 // since this app always take a bit to start due to building
                 sleep(120)
-
+                */
+                
                 // timer until health app
-                timeout(5) {
+                /*timeout(5) {
                   while ({
                       URL url = new URL("http://user-${unique_id}-dev.apps.ocp.uscis-fads.reisys.io/actuator/health");
                       HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -157,7 +170,7 @@ node (''){
                       connection.disconnect();
                       return ( code != 200 );
                   }()) continue
-                }
+                }*/
               }
             //}
             }
