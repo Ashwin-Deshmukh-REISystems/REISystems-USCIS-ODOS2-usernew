@@ -116,14 +116,17 @@ node (''){
                 openshift.verbose()
                 // parse template
                 echo '### before process ###'
-                def templatePath = 'https://raw.githubusercontent.com/Ashwin-Deshmukh-REISystems/REISystems-USCIS-ODOS2-usernew/develop/openshift/deploy-ci-template.yaml' 
-                def templateName = 'deploy-ci-template' 
+                //def templatePath = 'https://raw.githubusercontent.com/Ashwin-Deshmukh-REISystems/REISystems-USCIS-ODOS2-usernew/develop/openshift/deploy-ci-template.yaml' 
+                //def templateName = 'deploy-ci-template' 
                 //openshift.selector("all", [ template : templateName ]).delete()
                 //  echo '### after delete ###'
                 //openshift.newApp(templatePath)
-                  echo '### after newapp ###'
-                  def ocVersion = openshift.process("version")
-                  def models = openshift.process("-f", templatePath, "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                  //echo '### after newapp ###'
+                  //def ocVersion = openshift.process("version")
+                  //def models = openshift.process("-f", templatePath, "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
+                 // parse template
+                
+                def models = openshift.process( "cicd//uscis-odos-user-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
                 echo '### after process ###'
                 // create objects
                 def created = openshift.create( models )
@@ -207,6 +210,7 @@ node (''){
               openshift.withCluster( 'dev' ) {
                 //openshift.verbose()
                 // parse template
+                uscis-odos-user-ci-deploy-template
                 def models = openshift.process( "dev//uscis-odos-user-ci-deploy-template", "-p", "PROJECT_NAME=dev", "-p", paramAppName, "-p", paramAppVersion )
                 // create objects
                 def created = openshift.create( models )
