@@ -84,7 +84,7 @@ node (''){
             }
         }
       }
-      
+      /*
       stage('Build Docker Image') {
         echo '### before build docker ###'
           app_image = docker.build("testashwin/usernew")
@@ -95,7 +95,7 @@ node (''){
             app_image.push("dev")
           }
         }
-      
+      */
       stage('Integration Tests') {
 
             String appLabel = "user-$unique_id"
