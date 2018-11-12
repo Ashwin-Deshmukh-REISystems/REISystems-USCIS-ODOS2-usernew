@@ -131,7 +131,7 @@ node (''){
                     //withEnv(["PATH+OC=${ocDir}"]) {
                       openshift.withCluster( 'deploycluster' ) {
                         //openshift.verbose()
-                        def result = openshift.raw('import-image nexus.reisystems.io/testashwin/usernew:dev --insecure=true --confirm')
+                        def result = openshift.raw('import-image nexus.reisystems.io:5000/testashwin/usernew:dev --insecure=true --confirm')
                         echo "Result: ${result.out}"
                       }
                     //}
