@@ -110,7 +110,8 @@ node (''){
                 //echo '### after login ###'
                 //openshift.raw("whoami")
                 //echo '### after whoami ###'
-                openshift.withCredentials('cnU0uJLoySKPnS-NBm1xFykSWHOj1WQbjnK6weIvPX8'){
+                //openshift.withCredentials('cnU0uJLoySKPnS-NBm1xFykSWHOj1WQbjnK6weIvPX8'){
+                openshift.withCredentials('openshift-authentication'){
                 echo '### in cluster ###'
                 openshift.verbose()
                 // parse template
